@@ -846,23 +846,23 @@ function PassportCard({ batch }: { batch: Batch }) {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="w-full max-w-[360px] space-y-3 mx-auto md:max-w-none">
       <article
-        className="relative overflow-hidden rounded-[26px] bg-[#0d2b20] p-5 text-white shadow-[0_18px_45px_rgba(8,32,24,0.22)] sm:p-6"
+        className="relative overflow-hidden rounded-[22px] bg-[#0d2b20] p-4 text-white shadow-[0_18px_45px_rgba(8,32,24,0.22)] sm:rounded-[26px] sm:p-5 md:p-6"
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_0%,rgba(195,255,73,0.16),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.07),transparent_38%)]" />
-        <div className="relative flex items-start justify-between gap-4">
+        <div className="relative flex items-start justify-between gap-3 sm:gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <QrCode className="shrink-0 text-lime" size={20} />
-              <p className="truncate text-xs font-bold tracking-[.13em] text-lime">
+              <QrCode className="shrink-0 text-lime" size={18} />
+              <p className="truncate text-[10px] font-bold tracking-[.13em] text-lime sm:text-xs">
                 {batch.public_id}
               </p>
             </div>
-            <h2 className="mt-4 truncate text-2xl font-extrabold leading-none sm:text-3xl">
+            <h2 className="mt-3 truncate text-xl font-extrabold leading-none sm:mt-4 sm:text-2xl md:text-3xl">
               {batch.product_name}
             </h2>
-            <p className="mt-4 truncate text-sm font-medium text-emerald-100/80">
+            <p className="mt-3 truncate text-xs font-medium text-emerald-100/80 sm:mt-4 sm:text-sm">
               {batch.origin_name} <span className="text-lime/80">&bull;</span>{" "}
               {batch.producer_name}
             </p>
@@ -870,12 +870,12 @@ function PassportCard({ batch }: { batch: Batch }) {
               href={`/trace/${batch.public_id}`}
               target="_blank"
               rel="noreferrer"
-              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-3.5 py-2.5 text-xs font-extrabold text-forest shadow-sm"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-[10px] font-extrabold text-forest shadow-sm sm:mt-5 sm:px-3.5 sm:py-2.5 sm:text-xs"
             >
               <ExternalLink size={14} /> Open public passport
             </a>
           </div>
-          <div className="grid h-[78px] w-[78px] shrink-0 place-items-center rounded-2xl bg-white/[0.12] p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.16),0_12px_24px_rgba(0,0,0,0.18)] backdrop-blur sm:h-[86px] sm:w-[86px]">
+          <div className="grid h-[70px] w-[70px] shrink-0 place-items-center rounded-2xl bg-white/[0.12] p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.16),0_12px_24px_rgba(0,0,0,0.18)] backdrop-blur sm:h-[78px] sm:w-[78px] md:h-[86px] md:w-[86px]">
             <div className="grid h-full w-full place-items-center rounded-xl bg-[#f6faee] p-1.5 shadow-[inset_0_0_0_1px_rgba(13,43,32,0.08)]">
               <img
                 src={`/api/batches/${batch.public_id}/qr`}
@@ -950,7 +950,7 @@ function PassportCenter({ batches }: { batches: Batch[] }) {
         Share this public link as a QR code label so customers and receivers can
         see the verified journey.
       </p>
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-6 grid justify-items-center gap-4 md:grid-cols-2 xl:grid-cols-3">
         {batches.map((batch) => (
           <PassportCard key={batch.id} batch={batch} />
         ))}

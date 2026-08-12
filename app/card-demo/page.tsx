@@ -4,9 +4,9 @@ import AgentCard from "@/components/agent-card";
 
 export default function CardDemoPage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-16 px-4">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-12 text-[#10251C]" style={{ fontFamily: 'Playfair Display, serif' }}>
+    <div className="min-h-screen bg-gray-50 py-8 sm:py-16 px-2 sm:px-4 overflow-x-hidden">
+      <div className="w-full">
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12 text-[#10251C]" style={{ fontFamily: 'Playfair Display, serif' }}>
           Premium Agent Card Demo
         </h1>
         <AgentCard

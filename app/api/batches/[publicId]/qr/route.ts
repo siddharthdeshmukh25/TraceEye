@@ -21,17 +21,20 @@ export async function GET(
     const web = process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000";
     const traceUrl = `${web}/trace/${batch.public_id}`;
     
+    // Generate QR code - white background with dark patterns
     const qrCode = await QRCode.toBuffer(traceUrl, {
-      width: 180,
-      margin: 1,
-      errorCorrectionLevel: "H",
+      width: 150, // Small size like icon
+      margin: 1, // Minimal margin
       color: {
-        dark: "#0d2b20",
-        light: "#f6faee",
-      },
+        dark: "#1e293b", // dark slate (dark patterns)
+        light: "#ffffff" // white background
+      }
     });
 
-    return new NextResponse(new Uint8Array(qrCode), {
+    // Convert Buffer to Uint8Array for proper BodyInit compatibility
+    const qrCodeArray = new Uint8Array(qrCode);
+
+    return new NextResponse(qrCodeArray, {
       headers: {
         "Content-Type": "image/png",
         "Cache-Control": "public, max-age=3600",

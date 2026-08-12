@@ -57,7 +57,7 @@ export default async function TracePage({ params }: { params: { batchId: string 
   const createdDate = new Date(batch.created_at);
 
   return (
-    <main className="min-h-screen bg-canvas">
+    <main className="min-h-screen bg-canvas overflow-x-hidden">
       {/* Compact Header */}
       <header className="bg-ink px-4 py-3 text-white">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
@@ -74,7 +74,7 @@ export default async function TracePage({ params }: { params: { batchId: string 
         </div>
       </header>
 
-      <div className="mx-auto max-w-4xl px-4 py-6">
+      <div className="mx-auto w-full max-w-4xl px-2 sm:px-4 py-4 sm:py-6">
         {/* Compact Hero Section */}
         <section className="rounded-2xl bg-forest p-5 text-white">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
