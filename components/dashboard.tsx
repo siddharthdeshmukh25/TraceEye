@@ -13,8 +13,10 @@ import {
   Clock,
   Download,
   ExternalLink,
+  Eye,
   Globe,
   Leaf,
+  Lock,
   LogOut,
   MapPin,
   Menu,
@@ -27,6 +29,7 @@ import {
   Thermometer,
   Upload,
   X,
+  Zap,
 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -38,6 +41,8 @@ import SolarTelemetryDashboard from "./solar-telemetry-dashboard";
 import SpoilageRiskMonitor from "./spoilage-risk-monitor";
 import PersonaToggle, { getPersonaWidgets, type Persona } from "./persona-toggle";
 import PersonaDashboard from "./persona-dashboard";
+import VegetablePlotDashboard from "./vegetable-plot-dashboard";
+import QRScanner from "./qr-scanner";
 
 type Summary = {
   total_batches: number;
@@ -57,6 +62,7 @@ type Batch = {
   storage_max_c: number;
   current_status: string;
   created_at: string;
+  quarantine_reason?: string | null;
 };
 type Alert = {
   id: string;
@@ -177,6 +183,7 @@ export default function Dashboard() {
   const [readingBatch, setReadingBatch] = useState<Batch | null>(null);
   const [saving, setSaving] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const load = async () => {
     setLoading(true);
     try {
@@ -262,7 +269,7 @@ export default function Dashboard() {
   }, []);
   const visibleBatches = useMemo(
     () =>
-      batches.filter(
+      (Array.isArray(batches) ? batches : []).filter(
         (batch) =>
           (status === "all" || batch.current_status === status) &&
           `${batch.product_name} ${batch.public_id} ${batch.origin_name}`
@@ -319,25 +326,25 @@ export default function Dashboard() {
   ];
   return (
     <main className="traceeye-dashboard min-h-screen bg-canvas text-ink">
-      <aside className="fixed inset-y-0 hidden w-72 border-r border-white/10 bg-ink px-6 py-7 text-white lg:block">
+      <aside className="fixed inset-y-0 hidden w-64 border-r border-white/10 bg-ink px-5 py-6 text-white lg:block">
         <button
           onClick={() => go("overview")}
-          className="flex items-center gap-3 text-left"
+          className="flex items-center gap-2 text-left"
         >
-          <span className="grid h-11 w-11 place-items-center rounded-full bg-lime text-ink">
-            <Leaf size={22} />
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-lime text-ink">
+            <Leaf size={18} />
           </span>
           <span>
-            <span className="brand-wordmark block">TraceEye</span>
-            <span className="text-[10px] tracking-[.12em] text-emerald-100/60">
+            <span className="brand-wordmark block text-lg">TraceEye</span>
+            <span className="text-[9px] tracking-[.12em] text-emerald-100/60">
               FOOD. TRUST. TRACE.
             </span>
           </span>
         </button>
-        <p className="mt-7 text-sm leading-6 text-emerald-100/70">
+        <p className="mt-5 text-xs leading-5 text-emerald-100/70">
           Turn every food batch into evidence your team and customers can trust.
         </p>
-        <nav className="mt-9 space-y-1 text-sm">
+        <nav className="mt-6 space-y-1 text-sm">
           {[
             ["overview", "Overview", ShieldCheck],
             ["batches", "Batch registry", Boxes],
@@ -349,9 +356,9 @@ export default function Dashboard() {
             <button
               key={key as string}
               onClick={() => go(key as string)}
-              className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left ${tab === key ? "bg-white/10 font-bold text-white" : "text-emerald-100/70"}`}
+              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left ${tab === key ? "bg-white/10 text-white" : "text-emerald-100/70"}`}
             >
-              <Icon size={17} />
+              <Icon size={14} />
               {label as string}
             </button>
           ))}
@@ -367,7 +374,7 @@ export default function Dashboard() {
           </button>
         </div>
       </aside>
-      <section className="lg:ml-72">
+      <section className="lg:ml-64">
         <header className="border-b border-emerald-950/10 bg-[#fdfcf8]/90 px-3 py-3 backdrop-blur sm:px-7 sm:py-4">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
             <div className="flex items-center gap-3 lg:hidden">
@@ -384,52 +391,45 @@ export default function Dashboard() {
               </span>
               <span className="brand-wordmark text-[22px]">TraceEye</span>
             </div>
-            <div className="hidden lg:block">
+            <div className="hidden lg:flex items-center gap-4">
               <p className="text-xs font-bold tracking-[.14em] text-forest">
                 TRACEABILITY OPERATIONS
               </p>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="text-sm text-slate-500">
                 Your shared evidence workspace
               </p>
             </div>
-            <div className="flex items-center gap-2">
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                console.log('QR Scanner button clicked');
+                setShowQRScanner(true);
+              }}
+              className="grid h-8 w-8 place-items-center rounded-lg bg-forest text-white hover:bg-emerald-700 transition-colors"
+              title="Scan QR"
+            >
+              <QrCode size={16} />
+            </button>
+            <div className="hidden lg:flex">
               <PersonaToggle
                 currentPersona={currentPersona}
                 onPersonaChange={setCurrentPersona}
               />
-              <button
-                onClick={load}
-                title={
-                  databaseStatus === "connected"
-                    ? "MongoDB connected"
-                    : "MongoDB disconnected — retry now"
-                }
-                className="flex h-9 items-center gap-2 rounded-lg border border-emerald-950/10 bg-white px-2.5 text-[11px] font-bold text-slate-600 sm:h-10 sm:rounded-xl sm:px-3 sm:text-xs"
-              >
-                <span
-                  className={`h-2.5 w-2.5 rounded-full ${databaseStatus === "connected" ? "bg-emerald-500" : "bg-rose-500"}`}
-                />
-                <span className="hidden sm:inline">
-                  {databaseStatus === "connected"
-                    ? "Database"
-                    : "Database offline"}
-                </span>
-              </button>
-              <button
-                onClick={load}
-                title="Refresh data"
-                className="grid h-9 w-9 place-items-center rounded-lg border border-emerald-950/10 bg-white text-forest sm:h-10 sm:w-10 sm:rounded-xl"
-              >
-                <RefreshCw size={17} />
-              </button>
-              <button
-                onClick={() => setShowBatchForm(true)}
-                className="flex h-9 items-center gap-1 rounded-lg bg-forest px-3 text-xs font-bold text-white sm:h-auto sm:gap-2 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
-              >
-                <PackagePlus size={17} />{" "}
-                <span className="hidden sm:inline">Register batch</span>
-              </button>
             </div>
+            <button
+              onClick={load}
+              title={
+                databaseStatus === "connected"
+                  ? "MongoDB connected"
+                  : "MongoDB disconnected — retry now"
+              }
+              className="grid h-8 w-8 place-items-center rounded-lg border border-emerald-950/10 bg-white"
+            >
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${databaseStatus === "connected" ? "bg-emerald-500" : "bg-rose-500"}`}
+              />
+            </button>
           </div>
         </header>
         <div
@@ -456,12 +456,21 @@ export default function Dashboard() {
                     take only the recall action a batch needs.
                   </p>
                 </div>
-                <button
-                  onClick={() => go("batches")}
-                  className="flex items-center gap-1 text-sm font-bold text-forest"
-                >
-                  Open registry <ChevronRight size={17} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowBatchForm(true)}
+                    className="flex items-center gap-2 rounded-xl bg-forest px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors"
+                  >
+                    <PackagePlus size={16} />
+                    Register batch
+                  </button>
+                  <button
+                    onClick={() => go("batches")}
+                    className="flex items-center gap-1 text-sm font-bold text-forest"
+                  >
+                    Open registry <ChevronRight size={17} />
+                  </button>
+                </div>
               </div>
               <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {cards.map(({ label, value, icon: Icon, color }) => (
@@ -492,6 +501,11 @@ export default function Dashboard() {
                 <SpoilageRiskMonitor />
               </div>
 
+              {/* Vegetable Plot Production Dashboard */}
+              <div className="mt-6">
+                <VegetablePlotDashboard />
+              </div>
+
               {/* Multi-Persona Dashboard */}
               <PersonaDashboard persona={currentPersona} />
 
@@ -517,15 +531,15 @@ export default function Dashboard() {
                     </button>
                   </div>
                   <div className="mt-4 divide-y divide-emerald-950/5">
-                    {batches
-                      .slice(0, 5)
+                    {(Array.isArray(batches) ? batches.slice(0, 5) : [])
                       .map((batch) => (
                         <BatchRow
                           key={batch.id}
                           batch={batch}
                           onReading={setReadingBatch}
                         />
-                      )) || (
+                      ))}
+                    {(!Array.isArray(batches) || batches.length === 0) && (
                       <Empty text="No batches yet. Register the first product passport." />
                     )}
                   </div>
@@ -617,29 +631,29 @@ export default function Dashboard() {
               exit={{ opacity: 0 }}
             />
             <motion.nav
-              className="fixed inset-y-0 left-0 z-[60] w-72 bg-ink p-5 text-white shadow-2xl lg:hidden"
-              initial={{ x: -288 }}
+              className="fixed inset-y-0 left-0 z-[60] w-64 bg-ink p-4 text-white shadow-2xl lg:hidden overflow-y-auto"
+              initial={{ x: -256 }}
               animate={{ x: 0 }}
-              exit={{ x: -288 }}
+              exit={{ x: -256 }}
               transition={{ type: "tween", duration: 0.24, ease: "easeOut" }}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-full bg-lime text-ink">
-                    <Leaf size={20} />
+                <div className="flex items-center gap-2">
+                  <span className="grid h-8 w-8 place-items-center rounded-full bg-lime text-ink">
+                    <Leaf size={16} />
                   </span>
-                  <span className="brand-wordmark">TraceEye</span>
+                  <span className="brand-wordmark text-lg">TraceEye</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setMobileNavOpen(false)}
                   aria-label="Close dashboard navigation"
-                  className="grid h-9 w-9 place-items-center rounded-lg bg-white/10"
+                  className="grid h-8 w-8 place-items-center rounded-lg bg-white/10"
                 >
-                  <X size={18} />
+                  <X size={16} />
                 </button>
               </div>
-              <div className="mt-8 space-y-2 text-sm">
+              <div className="mt-6 space-y-1 text-sm">
                 {[
                   ["overview", "Overview", ShieldCheck],
                   ["batches", "Batch registry", Boxes],
@@ -651,16 +665,16 @@ export default function Dashboard() {
                   <button
                     key={key as string}
                     onClick={() => go(key as string)}
-                    className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left ${tab === key ? "bg-white/10 font-bold text-white" : "text-emerald-100/70"}`}
+                    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left ${tab === key ? "bg-white/10 text-white" : "text-emerald-100/70"}`}
                   >
-                    <Icon size={17} />
+                    <Icon size={14} />
                     {label as string}
                   </button>
                 ))}
               </div>
               <button
                 onClick={signOut}
-                className="absolute bottom-7 left-5 flex items-center gap-2 text-xs font-bold text-lime"
+                className="mt-6 flex items-center gap-2 text-xs font-bold text-lime"
               >
                 <LogOut size={14} /> Log out
               </button>
@@ -685,6 +699,15 @@ export default function Dashboard() {
           setNotice={setNotice}
           saving={saving}
           setSaving={setSaving}
+        />
+      )}
+
+      {showQRScanner && (
+        <QRScanner
+          onClose={() => setShowQRScanner(false)}
+          onScan={(result) => {
+            router.push(`/trace/${result}`);
+          }}
         />
       )}
     </main>
@@ -771,7 +794,7 @@ function BatchRegistry({
         </select>
       </div>
       <section className="mt-5 overflow-hidden rounded-2xl border border-emerald-950/5 bg-white">
-        {batches.length ? (
+        {Array.isArray(batches) && batches.length > 0 ? (
           batches.map((batch) => (
             <article
               key={batch.id}
@@ -781,6 +804,10 @@ function BatchRegistry({
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="font-bold">{batch.product_name}</h2>
                   <StatusBadge status={batch.current_status} />
+                  <div className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700">
+                    <Lock size={10} />
+                    <span>AES-256</span>
+                  </div>
                 </div>
                 <p className="mt-2 text-sm text-slate-600">
                   {batch.public_id} Â· {batch.initial_quantity_kg} kg Â·{" "}
@@ -791,17 +818,24 @@ function BatchRegistry({
                   {formatDate(batch.created_at)}
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <a
                   href={`/trace/${batch.public_id}`}
                   target="_blank"
-                  className="flex items-center gap-1 rounded-lg border border-emerald-950/10 px-3 py-2 text-xs font-bold text-forest"
+                  className="flex items-center gap-1 rounded-lg border border-emerald-950/10 px-3 py-2 text-xs font-bold text-forest hover:bg-emerald-50 transition-colors"
                 >
-                  <QrCode size={15} /> Passport
+                  <QrCode size={15} /> View Passport
+                </a>
+                <a
+                  href={`/api/batches/${batch.public_id}/qr?encrypted=true`}
+                  target="_blank"
+                  className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 px-3 py-2 text-xs font-bold text-white hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md"
+                >
+                  <Lock size={15} /> Secure QR
                 </a>
                 <button
                   onClick={() => onReading(batch)}
-                  className="flex items-center gap-1 rounded-lg bg-ink px-3 py-2 text-xs font-bold text-white"
+                  className="flex items-center gap-1 rounded-lg bg-ink px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-colors"
                 >
                   <Thermometer size={15} /> Add reading
                 </button>
@@ -824,7 +858,7 @@ function SafetyCenter({
   batches: Batch[];
   onReading: (batch: Batch) => void;
 }) {
-  const risky = batches.filter((batch) => batch.current_status !== "safe");
+  const risky = (Array.isArray(batches) ? batches : []).filter((batch) => batch.current_status !== "safe");
   return (
     <>
       <p className="text-xs font-bold tracking-[.15em] text-forest">
@@ -842,9 +876,36 @@ function SafetyCenter({
         <section className="rounded-2xl border border-emerald-950/5 bg-white p-5">
           <h2 className="font-bold">Batches needing attention</h2>
           <div className="mt-3 divide-y divide-emerald-950/5">
-            {risky.length ? (
+            {(Array.isArray(risky) && risky.length) ? (
               risky.map((batch) => (
-                <BatchRow key={batch.id} batch={batch} onReading={onReading} />
+                <div key={batch.id}>
+                  {/* DATA CONFLICT ALERT BANNER */}
+                  {batch.quarantine_reason?.includes('DATA CONFLICT') && (
+                    <div className="mb-3 rounded-xl border-4 border-red-600 bg-gradient-to-r from-red-100 to-red-200 p-4 shadow-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-red-600 text-white shadow-xl">
+                          <AlertTriangle size={24} />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-red-900 mb-1">🚨 DATA CONFLICT ANOMALY</h3>
+                          <p className="text-sm font-bold text-red-800 mb-2">
+                            Hardware sensor reports safe conditions, but physical seal is compromised. Suspected sensor tampering.
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <button className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white hover:bg-red-700 transition-colors">
+                              <Eye size={16} />
+                              Review Evidence
+                            </button>
+                            <p className="text-xs text-red-700">
+                              System automatically quarantined this batch. Awaiting admin manual override.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <BatchRow batch={batch} onReading={onReading} />
+                </div>
               ))
             ) : (
               <Empty text="No active risk batches. Keep capturing readings to maintain this view." />
@@ -854,7 +915,7 @@ function SafetyCenter({
         <section className="rounded-2xl border border-emerald-950/5 bg-white p-5">
           <h2 className="font-bold">Recall center</h2>
           <div className="mt-3 space-y-3">
-            {alerts.length ? (
+            {(Array.isArray(alerts) && alerts.length) ? (
               alerts.map((alert) => (
                 <article
                   key={alert.id}
@@ -873,7 +934,7 @@ function SafetyCenter({
                   <p className="mt-3 text-sm text-rose-900/80">
                     {alert.message}
                   </p>
-                  {alert.affected_locations?.length > 0 && (
+                  {(Array.isArray(alert.affected_locations) && alert.affected_locations.length > 0) && (
                     <p className="mt-2 flex items-center gap-1 text-xs font-bold text-rose-800">
                       <MapPin size={13} />
                       {alert.affected_locations.join(", ")}
@@ -946,18 +1007,29 @@ function PassportCard({ batch }: { batch: Batch }) {
               href={`/trace/${batch.public_id}`}
               target="_blank"
               rel="noreferrer"
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-[10px] font-extrabold text-forest shadow-sm sm:mt-5 sm:px-3.5 sm:py-2.5 sm:text-xs"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-[10px] font-extrabold text-forest shadow-sm sm:mt-5 sm:px-3.5 sm:py-2.5 sm:text-xs hover:bg-emerald-50 transition-colors"
             >
               <ExternalLink size={14} /> Open public passport
             </a>
+            <a
+              href={`/api/batches/${batch.public_id}/qr?encrypted=true`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 px-3 py-2 text-[10px] font-extrabold text-white shadow-md sm:px-3.5 sm:py-2.5 sm:text-xs hover:from-emerald-600 hover:to-emerald-700 transition-all"
+            >
+              <Lock size={14} /> Secure AES-256 QR
+            </a>
           </div>
           <div className="grid h-[70px] w-[70px] shrink-0 place-items-center rounded-2xl bg-white/[0.12] p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.16),0_12px_24px_rgba(0,0,0,0.18)] backdrop-blur sm:h-[78px] sm:w-[78px] md:h-[86px] md:w-[86px]">
-            <div className="grid h-full w-full place-items-center rounded-xl bg-[#f6faee] p-1.5 shadow-[inset_0_0_0_1px_rgba(13,43,32,0.08)]">
+            <div className="relative grid h-full w-full place-items-center rounded-xl bg-[#f6faee] p-1.5 shadow-[inset_0_0_0_1px_rgba(13,43,32,0.08)]">
               <img
-                src={`/api/batches/${batch.public_id}/qr`}
+                src={`/api/batches/${batch.public_id}/qr?encrypted=true`}
                 alt={`QR Code for ${batch.product_name}`}
                 className="h-full w-full rounded-lg object-contain mix-blend-multiply"
               />
+              <div className="absolute -top-1 -right-1 grid h-5 w-5 place-items-center rounded-full bg-emerald-500 text-white shadow-md">
+                <Lock size={10} />
+              </div>
             </div>
           </div>
         </div>
@@ -991,7 +1063,7 @@ function PassportCard({ batch }: { batch: Batch }) {
           <div className="grid h-[104px] w-[104px] shrink-0 place-items-center rounded-[24px] bg-white/[0.12] p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.16),0_12px_24px_rgba(0,0,0,0.18)]">
             <div className="grid h-full w-full place-items-center rounded-[16px] bg-[#f6faee] p-2 shadow-[inset_0_0_0_1px_rgba(13,43,32,0.08)]">
               <img
-                src={`/api/batches/${batch.public_id}/qr`}
+                src={`/api/batches/${batch.public_id}/qr?encrypted=true`}
                 alt=""
                 className="h-full w-full rounded-xl object-contain mix-blend-multiply"
               />
@@ -1027,13 +1099,13 @@ function PassportCenter({ batches }: { batches: Batch[] }) {
         see the verified journey.
       </p>
       <div className="mt-6 grid justify-items-center gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {batches.map((batch) => (
+        {(Array.isArray(batches) ? batches : []).map((batch) => (
           <PassportCard key={batch.id} batch={batch} />
         ))}
+        {(!Array.isArray(batches) || batches.length === 0) && (
+          <Empty text="Register a batch to generate its public food passport." />
+        )}
       </div>
-      {!batches.length && (
-        <Empty text="Register a batch to generate its public food passport." />
-      )}
     </>
   );
 }
@@ -1228,13 +1300,13 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
       <div className="mt-6">
         <button
           onClick={() => setShowUploadForm(true)}
-          className="group relative flex items-center gap-3 rounded-2xl bg-gradient-to-r from-forest to-emerald-700 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition-all hover:shadow-xl hover:shadow-emerald-900/30 hover:scale-105"
+          className="group relative flex items-center gap-2 rounded-xl bg-gradient-to-r from-forest to-emerald-700 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-900/20 transition-all hover:shadow-lg hover:shadow-emerald-900/30"
         >
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/20 transition-all group-hover:bg-white/30">
-            <Upload size={20} />
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-white/20 transition-all group-hover:bg-white/30">
+            <Upload size={16} />
           </div>
           <span>Upload New Verification</span>
-          <ChevronRight size={18} className="transition-transform group-hover:translate-x-1" />
+          <ChevronRight size={14} className="transition-transform group-hover:translate-x-1" />
         </button>
       </div>
 
@@ -1245,64 +1317,64 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
         </div>
         
         {visualVerifications.length ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {visualVerifications.map((verification) => (
               <motion.article
                 key={verification.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="group relative overflow-hidden rounded-2xl border border-emerald-950/5 bg-white shadow-sm transition-all hover:shadow-lg hover:border-emerald-500/20"
+                className="group relative overflow-hidden rounded-xl border border-emerald-950/5 bg-white shadow-sm transition-all hover:shadow-md hover:border-emerald-500/20"
               >
-                <div className={`absolute top-0 right-0 p-3 bg-gradient-to-br ${getStatusColor(verification.verification_status)}`}>
+                <div className={`absolute top-2 right-2 p-1.5 rounded-lg bg-gradient-to-br ${getStatusColor(verification.verification_status)}`}>
                   {getStatusIcon(verification.verification_status)}
                 </div>
-                
-                <div className="p-4">
-                  <div className="mb-3">
-                    <h3 className="font-bold text-forest">{verification.batch_public_id}</h3>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {new Date(verification.created_at).toLocaleDateString("en-IN", { 
-                        month: 'short', 
+
+                <div className="p-3">
+                  <div className="mb-2">
+                    <h3 className="text-sm font-bold text-forest">{verification.batch_public_id}</h3>
+                    <p className="mt-0.5 text-[10px] text-slate-500">
+                      {new Date(verification.created_at).toLocaleDateString("en-IN", {
+                        month: 'short',
                         day: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit'
                       })}
                     </p>
                   </div>
-                  
-                  <div className="relative mb-4 overflow-hidden rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 aspect-square">
-                    <img 
-                      src={verification.image_url} 
-                      alt="Seal verification" 
+
+                  <div className="relative mb-3 overflow-hidden rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100 aspect-video">
+                    <img
+                      src={verification.image_url}
+                      alt="Seal verification"
                       className="h-full w-full object-cover transition-transform group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                   </div>
-                  
-                  <div className="mb-3 flex items-center justify-between text-xs">
+
+                  <div className="mb-2 flex items-center justify-between text-[10px]">
                     <span className="flex items-center gap-1 text-slate-500">
-                      <Camera size={12} />
+                      <Camera size={10} />
                       {verification.verification_method.replace(/_/g, ' ')}
                     </span>
                     {verification.ai_confidence > 0 && (
                       <span className="flex items-center gap-1 text-slate-500">
-                        <ShieldCheck size={12} />
+                        <ShieldCheck size={10} />
                         {(verification.ai_confidence * 100).toFixed(0)}% confidence
                       </span>
                     )}
                   </div>
-                  
+
                   {verification.verification_status === "pending" ? (
                     <button
                       onClick={() => setSelectedVerification(verification)}
-                      className="w-full rounded-xl bg-forest px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-emerald-700"
+                      className="w-full rounded-lg bg-forest px-3 py-2 text-[10px] font-bold text-white transition-all hover:bg-emerald-700"
                     >
                       Review Seal
                     </button>
                   ) : (
                     <button
                       onClick={() => setSelectedVerification(verification)}
-                      className="w-full rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-bold text-slate-700 transition-all hover:bg-slate-200"
+                      className="w-full rounded-lg bg-slate-100 px-3 py-2 text-[10px] font-bold text-slate-700 transition-all hover:bg-slate-200"
                     >
                       Edit Status
                     </button>
@@ -1335,7 +1407,7 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
                 className="mt-2 w-full rounded-xl border border-emerald-950/10 bg-white px-4 py-3 font-normal outline-none focus:border-forest focus:ring-2 focus:ring-forest/20"
               >
                 <option value="">Choose a batch...</option>
-                {batches.map((batch) => (
+                {(Array.isArray(batches) ? batches : []).map((batch) => (
                   <option key={batch.public_id} value={batch.public_id}>
                     {batch.product_name} ({batch.public_id})
                   </option>
@@ -1547,7 +1619,7 @@ function BatchForm({
       const batch = await response.json();
       if (!response.ok) throw new Error(batch.detail || "Failed to create batch");
       setNotice(
-        `${batch.public_id} is registered. Its QR food passport is ready.`,
+        `🔐 ${batch.public_id} registered successfully! AES-256 encrypted QR codes are now available for enhanced security.`,
       );
       close();
       await refresh();

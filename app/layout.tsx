@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Playfair_Display, Allura, Inter } from "next/font/google";
+import SystemStatusPanel from "@/components/system-status-panel";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" className={`${playfair.variable} ${allura.variable} ${inter.variable}`}>
       <body>
         {children}
+        <SystemStatusPanel />
       </body>
     </html>
   );

@@ -1,28 +1,43 @@
 import { NextResponse } from "next/server";
 import QRCode from "qrcode";
 import { db } from "@/lib/mongodb";
+import { createQRPayload } from "@/lib/encryption";
 
 export const runtime = "nodejs";
 
 export async function GET(
-  _: Request,
-  { params }: { params: { publicId: string } }
+  request: Request,
+  { params }: { params: Promise<{ publicId: string }> }
 ) {
+  const { publicId } = await params;
   try {
     const database = await db();
     const batch = await database.collection("batches").findOne({ 
-      public_id: params.publicId 
+      public_id: publicId 
     });
     
     if (!batch) {
       return NextResponse.json({ detail: "Batch not found" }, { status: 404 });
     }
 
-    const web = process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000";
-    const traceUrl = `${web}/trace/${batch.public_id}`;
+    const { searchParams } = new URL(request.url);
+    const encrypted = searchParams.get('encrypted') === 'true';
+
+    let qrData: string;
+
+    if (encrypted) {
+      // Generate encrypted QR payload with scan page URL
+      const encryptedPayload = createQRPayload(publicId);
+      const web = process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000";
+      qrData = `${web}/scan?data=${encodeURIComponent(encryptedPayload)}`;
+    } else {
+      // Legacy QR code with plain URL (for backward compatibility)
+      const web = process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000";
+      qrData = `${web}/trace/${publicId}`;
+    }
     
     // Generate QR code - white background with dark patterns
-    const qrCode = await QRCode.toBuffer(traceUrl, {
+    const qrCode = await QRCode.toBuffer(qrData, {
       width: 150, // Small size like icon
       margin: 1, // Minimal margin
       color: {

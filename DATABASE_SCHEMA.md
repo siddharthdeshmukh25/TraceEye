@@ -46,7 +46,11 @@ Food batch records
   storage_min_c: number,
   storage_max_c: number,
   ingredient_batch_ids: ObjectId[], // References batches._id (for composite products)
-  current_status: "safe" | "at_risk" | "critical",
+  current_status: "safe" | "at_risk" | "critical" | "quarantined",
+  quarantine_reason: string | null,
+  quarantine_at: Date | null,
+  quarantine_by: ObjectId | null, // References users._id
+  integrity_hash: string | null, // SHA-256 hash for trace integrity
   user_id: ObjectId, // References users._id (creator)
   created_at: Date
 }

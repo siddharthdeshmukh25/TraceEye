@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/mongodb";
+import { dbWrapper } from "@/lib/database-wrapper";
 import { badRequest, id, publicId } from "@/lib/api";
 import { verifyToken } from "@/lib/token";
+import { createInitialBatchHash } from "@/lib/hash-chain";
 
 export const runtime = "nodejs";
 
@@ -23,21 +25,65 @@ export async function GET(request: Request) {
       return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
     }
     
-    const database = await db();
+    // Use database wrapper with fallback
+    const result = await dbWrapper.getDataWithFallback(
+      "batches",
+      { user_id: userId },
+      "traceeye_cache_batches"
+    );
     
-    // Filter batches by user_id
-    const filter = { user_id: userId };
+    if (result.error && result.source === 'fallback') {
+      return NextResponse.json({ 
+        detail: "Database unavailable - no cached data available",
+        usingCache: false,
+        systemStatus: "degraded"
+      }, { status: 503 });
+    }
     
-    const batches = await database.collection("batches")
-      .find(filter)
-      .sort({ created_at: -1 })
-      .limit(100)
-      .toArray();
-      
-    const producers = await database.collection("organizations").find({ _id: { $in: batches.map((batch) => batch.producer_id) } }).toArray();
+    const batches = result.data || [];
+    
+    // Try to get producers, with fallback
+    let producers = [];
+    try {
+      const database = await db();
+      producers = await database.collection("organizations").find({ _id: { $in: batches.map((batch) => batch.producer_id) } }).toArray();
+    } catch (error) {
+      console.error("Error fetching producers:", error);
+      // Continue with empty producers array
+    }
+    
     const producerNames = new Map(producers.map((producer) => [producer._id.toString(), producer.name]));
-    return NextResponse.json(batches.map((batch) => ({ id: batch._id.toString(), public_id: batch.public_id, product_name: batch.product_name, producer_name: producerNames.get(batch.producer_id.toString()) ?? "Unknown producer", origin_name: batch.origin_name, initial_quantity_kg: batch.initial_quantity_kg, quality_grade: batch.quality_grade, storage_min_c: batch.storage_min_c, storage_max_c: batch.storage_max_c, current_status: batch.current_status, created_at: batch.created_at })));
-  } catch (error) { return NextResponse.json({ detail: error instanceof Error ? error.message : "Database unavailable" }, { status: 503 }); }
+    
+    const batchData = batches.map((batch) => ({ 
+      id: batch._id?.toString() || batch.id, 
+      public_id: batch.public_id, 
+      product_name: batch.product_name, 
+      producer_name: producerNames.get(batch.producer_id?.toString()) ?? "Unknown producer", 
+      origin_name: batch.origin_name, 
+      initial_quantity_kg: batch.initial_quantity_kg, 
+      quality_grade: batch.quality_grade, 
+      storage_min_c: batch.storage_min_c, 
+      storage_max_c: batch.storage_max_c, 
+      current_status: batch.current_status, 
+      created_at: batch.created_at 
+    }));
+    
+    const response = NextResponse.json(batchData);
+    
+    // Add warning header if using cache
+    if (result.source === 'cache') {
+      response.headers.set('X-System-Status', 'degraded');
+      response.headers.set('X-Data-Source', 'cache');
+    }
+    
+    return response;
+    
+  } catch (error) { 
+    return NextResponse.json({ 
+      detail: error instanceof Error ? error.message : "Database unavailable",
+      systemStatus: "critical"
+    }, { status: 503 }); 
+  }
 }
 
 export async function POST(request: Request) {
@@ -57,6 +103,18 @@ export async function POST(request: Request) {
     if (!await database.collection("organizations").findOne({ _id: producerId })) return badRequest("Producer not found");
     
     const public_id = publicId(); 
+    const createdAt = new Date();
+    
+    // Create initial hash for the batch (hash chain genesis)
+    const initialHash = createInitialBatchHash({
+      publicId,
+      productName: body.product_name,
+      originName: body.origin_name,
+      quantity: Number(body.initial_quantity_kg),
+      qualityGrade: body.quality_grade,
+      createdAt
+    });
+    
     const item = { 
       public_id, 
       product_name: body.product_name, 
@@ -71,7 +129,8 @@ export async function POST(request: Request) {
       ingredient_batch_ids: (body.ingredient_batch_ids ?? []).map(id).filter(Boolean), 
       current_status: "safe", 
       user_id: userId, // Use authenticated user ID
-      created_at: new Date() 
+      integrity_hash: initialHash, // Add initial hash for chain
+      created_at: createdAt 
     };
     
     console.log("Inserting batch:", item);
@@ -79,7 +138,13 @@ export async function POST(request: Request) {
     console.log("Batch inserted:", result);
     
     const web = process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000";
-    return NextResponse.json({ id: result.insertedId.toString(), public_id, trace_url: `${web}/trace/${public_id}`, qr_url: `/api/batches/${public_id}/qr` }, { status: 201 });
+    return NextResponse.json({ 
+      id: result.insertedId.toString(), 
+      public_id, 
+      trace_url: `${web}/trace/${public_id}`, 
+      qr_url: `/api/batches/${publicId}/qr`,
+      secure_qr_url: `/api/batches/${publicId}/qr?encrypted=true`
+    }, { status: 201 });
   } catch (error) {
     console.error("Batch creation error:", error);
     return NextResponse.json({ detail: error instanceof Error ? error.message : "Batch creation failed" }, { status: 500 });

@@ -27,7 +27,19 @@ export async function GET(request: Request) {
     const filter = { user_id: userId, resolved_at: null };
     
     const alerts = await database.collection("alerts").find(filter).sort({ created_at: -1 }).limit(20).toArray();
-    const batches = await database.collection("batches").find({ _id: { $in: alerts.map((alert) => alert.batch_id) } }, { projection: { public_id: 1, product_name: 1 } }).toArray(); const batchMap = new Map(batches.map((batch) => [batch._id.toString(), batch]));
-    return NextResponse.json(alerts.map((alert) => ({ id: alert._id.toString(), severity: alert.severity, title: alert.title, message: alert.message, affected_locations: alert.affected_locations, created_at: alert.created_at, batch: batchMap.get(alert.batch_id.toString()) ?? null })));
+    const batches = await database.collection("batches").find({ _id: { $in: alerts.map((alert) => alert.batch_id) } }, { projection: { public_id: 1, product_name: 1 } }).toArray(); 
+    const batchMap = new Map(batches.map((batch) => [batch._id.toString(), batch]));
+    
+    const alertData = alerts.map((alert) => ({ 
+      id: alert._id.toString(), 
+      severity: alert.severity, 
+      title: alert.title, 
+      message: alert.message, 
+      affected_locations: alert.affected_locations, 
+      created_at: alert.created_at, 
+      batch: batchMap.get(alert.batch_id.toString()) ?? null 
+    }));
+    
+    return NextResponse.json(alertData);
   } catch (error) { return NextResponse.json({ detail: error instanceof Error ? error.message : "Database unavailable" }, { status: 503 }); }
 }

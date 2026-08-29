@@ -3,6 +3,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:full": "concurrently \"npm run dev\" \"npm run dev:python\"",
+    "dev:python": "cd python-backend && uvicorn main:app --reload --host 0.0.0.0 --port 8000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -12,6 +14,7 @@
     "firebase": "^12.17.1",
     "framer-motion": "^12.4.7",
     "html2canvas": "^1.4.1",
+    "html5-qrcode": "^2.3.8",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.475.0",
     "mongodb": "^7.5.0",
@@ -20,7 +23,8 @@
     "qrcode": "^1.5.4",
     "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
@@ -28,6 +32,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.0.8",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^8.2.2",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.25",
     "postcss": "^8.5.1",

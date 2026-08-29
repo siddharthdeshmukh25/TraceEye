@@ -1,39 +1,81 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/mongodb";
-import { verifyToken } from "@/lib/token";
+import { dbWrapper } from "@/lib/database-wrapper";
 
 export const runtime = "nodejs";
 
-function verifyAuth(request: Request): string | null {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return null;
-  }
-  const token = authHeader.substring(7);
-  const payload = verifyToken(token);
-  return payload?.id || null;
-}
-
 export async function GET(request: Request) {
   try {
-    const userId = verifyAuth(request);
-    if (!userId) {
-      return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
+    const { searchParams } = new URL(request.url);
+    const user_id = searchParams.get("user_id");
+    
+    if (!user_id) {
+      return NextResponse.json({ detail: "user_id is required" }, { status: 400 });
     }
-    
-    const database = await db();
-    
-    // Filter by authenticated user_id
-    const batchFilter = { user_id: userId };
-    const alertFilter = { user_id: userId, resolved_at: null };
-    
-    const [total_batches, safe_batches, risk_batches, open_alerts, recent_batches] = await Promise.all([
-      database.collection("batches").countDocuments(batchFilter), 
-      database.collection("batches").countDocuments({ ...batchFilter, current_status: "safe" }),
-      database.collection("batches").countDocuments({ ...batchFilter, current_status: { $in: ["at_risk", "critical"] } }), 
-      database.collection("alerts").countDocuments(alertFilter),
-      database.collection("batches").find(batchFilter, { projection: { _id: 0, public_id: 1, product_name: 1, current_status: 1, created_at: 1 } }).sort({ created_at: -1 }).limit(8).toArray()
+
+    // Use database wrapper with fallback for each collection
+    const [batchesResult, alertsResult] = await Promise.all([
+      dbWrapper.getDataWithFallback("batches", { user_id }, "traceeye_cache_batches"),
+      dbWrapper.getDataWithFallback("alerts", { user_id }, "traceeye_cache_alerts")
     ]);
-    return NextResponse.json({ total_batches, safe_batches, risk_batches, open_alerts, recent_batches });
-  } catch (error) { return NextResponse.json({ detail: error instanceof Error ? error.message : "Database unavailable" }, { status: 503 }); }
+
+    const batches = batchesResult.data || [];
+    const alerts = alertsResult.data || [];
+
+    // Calculate summary statistics with fallback
+    const summary = {
+      total_batches: batches.length,
+      safe_batches: batches.filter((b: any) => b.current_status === 'safe').length,
+      risk_batches: batches.filter((b: any) => b.current_status === 'at_risk' || b.current_status === 'critical').length,
+      open_alerts: alerts.length,
+      recentActivity: batches.slice(0, 5).map((b: any) => ({
+        id: b.public_id,
+        product: b.product_name,
+        status: b.current_status,
+        timestamp: b.created_at
+      })),
+      systemStatus: {
+        database: batchesResult.error ? 'degraded' : 'healthy',
+        usingCache: batchesResult.source === 'cache',
+        lastUpdated: batchesResult.timestamp
+      }
+    };
+
+    const response = NextResponse.json(summary);
+
+    // Add system status headers
+    if (batchesResult.source === 'cache') {
+      response.headers.set('X-System-Status', 'degraded');
+      response.headers.set('X-Data-Source', 'cache');
+    } else if (batchesResult.error) {
+      response.headers.set('X-System-Status', 'critical');
+    } else {
+      response.headers.set('X-System-Status', 'healthy');
+    }
+
+    return response;
+
+  } catch (error) {
+    console.error("Dashboard summary error:", error);
+    
+    // Return minimal fallback data
+    return NextResponse.json({
+      total_batches: 0,
+      safe_batches: 0,
+      risk_batches: 0,
+      open_alerts: 0,
+      recentActivity: [],
+      systemStatus: {
+        database: 'critical',
+        usingCache: false,
+        lastUpdated: Date.now()
+      },
+      error: error instanceof Error ? error.message : 'System unavailable'
+    }, { 
+      status: 503,
+      headers: {
+        'X-System-Status': 'critical'
+      }
+    });
+  }
 }

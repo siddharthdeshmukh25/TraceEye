@@ -54,3 +54,8 @@ button, input, select { font: inherit; }
   from { opacity: 0; transform: translateY(100%); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+@keyframes scanMove {
+  0%, 100% { top: 10%; }
+  50% { top: 90%; }
+}

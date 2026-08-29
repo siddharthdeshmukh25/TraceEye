@@ -1,12 +1,13 @@
 "use client";
 
+import React from "react";
 import { PackageCheck, Sun, Truck, Store, MapPin, Thermometer, CheckCircle2, Clock, ShieldCheck } from "lucide-react";
 
 export interface SupplyChainStage {
   id: string;
   title: string;
   subtitle: string;
-  icon: any;
+  icon: string;
   status: 'completed' | 'in_progress' | 'pending';
   timestamp?: string;
   details?: {
@@ -23,6 +24,16 @@ interface SupplyChainTimelineProps {
 }
 
 export default function SupplyChainTimeline({ stages }: SupplyChainTimelineProps) {
+  const getIconComponent = (iconName: string) => {
+    switch (iconName) {
+      case 'PackageCheck': return PackageCheck;
+      case 'Sun': return Sun;
+      case 'Truck': return Truck;
+      case 'Store': return Store;
+      default: return PackageCheck;
+    }
+  };
+
   const getStageColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -60,11 +71,13 @@ export default function SupplyChainTimeline({ stages }: SupplyChainTimelineProps
 
         {/* Stages */}
         <div className="space-y-6">
-          {stages.map((stage, index) => (
+          {stages.map((stage, index) => {
+            const IconComponent = getIconComponent(stage.icon);
+            return (
             <div key={stage.id} className="relative flex gap-4">
               {/* Stage Icon */}
               <div className={`relative z-10 grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 ${getStageColor(stage.status)}`}>
-                <stage.icon size={18} />
+                <IconComponent size={18} />
               </div>
 
               {/* Stage Content */}
@@ -130,7 +143,8 @@ export default function SupplyChainTimeline({ stages }: SupplyChainTimelineProps
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
@@ -144,7 +158,7 @@ export function createMockSupplyChainData(): SupplyChainStage[] {
       id: 'harvest',
       title: 'Harvest',
       subtitle: 'Green Valley Farms, Nashik',
-      icon: PackageCheck,
+      icon: 'PackageCheck',
       status: 'completed',
       timestamp: '2024-01-15 06:30 AM',
       details: {
@@ -156,7 +170,7 @@ export function createMockSupplyChainData(): SupplyChainStage[] {
       id: 'smart-storage',
       title: 'Smart Storage',
       subtitle: 'Cold Storage Unit A1 - Solar Powered',
-      icon: Sun,
+      icon: 'Sun',
       status: 'completed',
       timestamp: '2024-01-15 08:00 AM',
       details: {
@@ -170,7 +184,7 @@ export function createMockSupplyChainData(): SupplyChainStage[] {
       id: 'cold-logistics',
       title: 'Cold Logistics',
       subtitle: 'Refrigerated Transit - Route NH65',
-      icon: Truck,
+      icon: 'Truck',
       status: 'in_progress',
       timestamp: '2024-01-15 02:30 PM',
       details: {
@@ -183,7 +197,7 @@ export function createMockSupplyChainData(): SupplyChainStage[] {
       id: 'retail',
       title: 'Retail',
       subtitle: 'FreshMart Supermarket - Store #42',
-      icon: Store,
+      icon: 'Store',
       status: 'pending',
       details: {
         location: 'Mumbai, Maharashtra'
