@@ -1,6 +1,7 @@
 import { CheckCircle2, CircleAlert, Leaf, MapPin, PackageCheck, ShieldCheck, Clock, Award } from "lucide-react";
 import { StatusBadge } from "../../../components/status-badge";
 import ShareButton from "../../../components/share-button";
+import GPSTracker from "../../../components/gps-tracker";
 
 const api = process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000";
 
@@ -13,6 +14,8 @@ type Batch = {
   current_status: string;
   created_at: string;
   producer_name: string;
+  producer_email: string;
+  producer_location: string | null;
   handovers: {
     created_at: string;
     status: string;
@@ -58,10 +61,13 @@ export default async function TracePage({ params }: { params: { batchId: string 
 
   return (
     <main className="min-h-screen bg-canvas overflow-x-hidden">
+      {/* GPS Tracker - records visit with location */}
+      <GPSTracker batchPublicId={batch.public_id} />
+      
       {/* Compact Header */}
       <header className="bg-ink px-4 py-3 text-white">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-lime text-ink">
               <Leaf size={18}/>
             </span>
@@ -69,7 +75,7 @@ export default async function TracePage({ params }: { params: { batchId: string 
               <p className="font-bold text-sm">TraceEye</p>
               <p className="text-[10px] text-emerald-100/70">Food Passport</p>
             </div>
-          </div>
+          </a>
           <ShareButton />
         </div>
       </header>
@@ -116,6 +122,60 @@ export default async function TracePage({ params }: { params: { batchId: string 
           </div>
         </section>
 
+        {/* Producer Info */}
+        <section className="mt-4 rounded-xl border border-emerald-950/5 bg-gradient-to-br from-emerald-50 to-white p-4">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-forest">
+            <PackageCheck size={16} />
+            Posted By
+          </h2>
+          <div className="flex flex-col sm:flex-row gap-4 items-start">
+            {/* Avatar Section */}
+            <div className="flex-shrink-0">
+              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-lime to-emerald-400 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                {batch.producer_name?.charAt(0)?.toUpperCase() || "P"}
+              </div>
+            </div>
+            {/* Producer Details */}
+            <div className="flex-1">
+              <div className="mb-3">
+                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">Account Owner</p>
+                <p className="mt-1 text-base font-bold text-forest">{batch.producer_name}</p>
+              </div>
+              {batch.producer_location && (
+                <div className="mb-3 flex items-center gap-2">
+                  <MapPin size={14} className="text-emerald-600" />
+                  <div>
+                    <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">Location</p>
+                    <p className="text-sm font-semibold text-forest">{batch.producer_location}</p>
+                  </div>
+                </div>
+              )}
+              {batch.producer_email && batch.producer_email !== "contact@traceeye.com" && (
+                <div className="mb-3">
+                  <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">Email</p>
+                  <a href={`mailto:${batch.producer_email}`} className="mt-1 text-sm font-semibold text-emerald-600 hover:text-emerald-700 hover:underline break-all">
+                    {batch.producer_email}
+                  </a>
+                </div>
+              )}
+              <div>
+                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">Posted On</p>
+                <p className="mt-1 text-sm font-semibold text-forest">
+                  {createdDate.toLocaleDateString("en-US", { 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: 'numeric'
+                  })} at {createdDate.toLocaleTimeString("en-US", {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                  })}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Compact Product Details */}
         <section className="mt-4 rounded-xl border border-emerald-950/5 bg-white p-4">
           <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-forest">
@@ -136,11 +196,8 @@ export default async function TracePage({ params }: { params: { batchId: string 
               <p className="mt-1 text-sm font-bold text-forest">{batch.quality_grade}</p>
             </div>
             <div className="rounded-lg bg-emerald-50 p-3">
-              <p className="text-[10px] font-medium text-slate-500">Created</p>
-              <p className="mt-1 text-sm font-bold text-forest">{createdDate.toLocaleDateString("en-US", { 
-                month: 'short', 
-                day: 'numeric' 
-              })}</p>
+              <p className="text-[10px] font-medium text-slate-500">Batch ID</p>
+              <p className="mt-1 text-sm font-bold text-forest">{batch.public_id}</p>
             </div>
           </div>
         </section>

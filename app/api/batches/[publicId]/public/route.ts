@@ -22,6 +22,19 @@ export async function GET(
       _id: batch.producer_id 
     });
 
+    // Get user info (the person who created this account)
+    let userName = producer?.name || "Unknown"; // Default to organization name
+    let userEmail = producer?.contact_email;
+    if (batch.user_id) {
+      const user = await database.collection("users").findOne({ 
+        _id: batch.user_id 
+      });
+      if (user) {
+        userName = user.full_name || user.name || producer?.name || "Unknown";
+        userEmail = user.email || userEmail;
+      }
+    }
+
     // Get handovers for this batch
     const handovers = await database.collection("handovers")
       .find({ batch_id: batch._id })
@@ -47,6 +60,8 @@ export async function GET(
       current_status: batch.current_status,
       created_at: batch.created_at,
       producer_name: producer?.name || "Unknown producer",
+      producer_email: userEmail || "contact@traceeye.com",
+      producer_location: producer?.location_name || null,
       handovers: handovers.map((h) => ({
         created_at: h.created_at,
         status: h.status,

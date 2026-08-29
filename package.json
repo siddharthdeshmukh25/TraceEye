@@ -8,6 +8,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "cloudinary": "^2.11.0",
     "firebase": "^12.17.1",
     "framer-motion": "^12.4.7",
     "html2canvas": "^1.4.1",

@@ -4,12 +4,16 @@ import {
   AlertTriangle,
   BellRing,
   Boxes,
+  Camera,
   CheckCircle2,
   ChevronRight,
+  CircleAlert,
   ClipboardCheck,
   CircleHelp,
+  Clock,
   Download,
   ExternalLink,
+  Globe,
   Leaf,
   LogOut,
   MapPin,
@@ -21,6 +25,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Thermometer,
+  Upload,
   X,
 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
@@ -57,6 +62,28 @@ type Alert = {
   affected_locations: string[];
   created_at: string;
   batch: { public_id: string; product_name: string } | null;
+};
+type CardVisit = {
+  id: string;
+  batch_public_id: string;
+  product_name: string;
+  latitude: number;
+  longitude: number;
+  location_name: string;
+  visitor_ip: string;
+  device_info: string;
+  visited_at: string;
+};
+type VisualVerification = {
+  id: string;
+  batch_public_id: string;
+  image_url: string;
+  verification_status: string;
+  ai_confidence: number;
+  verification_method: string;
+  verification_notes: string;
+  created_at: string;
+  verified_at: string | null;
 };
 type Session = { full_name?: string; name?: string; email?: string; id?: string };
 const blankSummary: Summary = {
@@ -129,6 +156,8 @@ export default function Dashboard() {
   const [summary, setSummary] = useState(blankSummary);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [cardVisits, setCardVisits] = useState<CardVisit[]>([]);
+  const [visualVerifications, setVisualVerifications] = useState<VisualVerification[]>([]);
   const [session, setSession] = useState<Session>({});
   const [tab, setTab] = useState("overview");
   const [query, setQuery] = useState("");
@@ -168,16 +197,26 @@ export default function Dashboard() {
         "Authorization": `Bearer ${token}`
       };
       
-      const [summaryResult, batchesResult, alertsResult] = await Promise.all([
+      const [summaryResult, batchesResult, alertsResult, visitsResult, verificationsResult] = await Promise.all([
         fetch(`/api/dashboard/summary?user_id=${userId}`, { headers }),
         fetch(`/api/batches?user_id=${userId}`, { headers }),
         fetch(`/api/alerts?user_id=${userId}`, { headers }),
+        fetch(`/api/card-visits/history`, { headers }),
+        fetch(`/api/visual-verification`, { headers }),
       ]);
       if (!summaryResult.ok || !batchesResult.ok || !alertsResult.ok)
         throw new Error("MongoDB is unavailable");
       setSummary(await summaryResult.json());
       setBatches(await batchesResult.json());
       setAlerts(await alertsResult.json());
+      if (visitsResult.ok) {
+        const visitsData = await visitsResult.json();
+        setCardVisits(visitsData.visits || []);
+      }
+      if (verificationsResult.ok) {
+        const verificationsData = await verificationsResult.json();
+        setVisualVerifications(verificationsData.verifications || []);
+      }
       setDatabaseStatus("connected");
       setDatabaseIssue("");
     } catch (error) {
@@ -298,6 +337,8 @@ export default function Dashboard() {
             ["overview", "Overview", ShieldCheck],
             ["batches", "Batch registry", Boxes],
             ["safety", "Safety & recalls", ShieldAlert],
+            ["tracking", "GPS tracking", Globe],
+            ["verification", "Seal verification", Camera],
             ["passports", "QR food passports", QrCode],
           ].map(([key, label, Icon]) => (
             <button
@@ -527,6 +568,16 @@ export default function Dashboard() {
               onReading={setReadingBatch}
             />
           )}{" "}
+          {tab === "tracking" && (
+            <GPSTrackingCenter cardVisits={cardVisits} batches={batches} />
+          )}{" "}
+          {tab === "verification" && (
+            <SealVerificationCenter 
+              visualVerifications={visualVerifications} 
+              batches={batches}
+              refresh={load}
+            />
+          )}{" "}
           {tab === "passports" && <PassportCenter batches={batches} />}
         </div>
       </section>
@@ -570,6 +621,8 @@ export default function Dashboard() {
                   ["overview", "Overview", ShieldCheck],
                   ["batches", "Batch registry", Boxes],
                   ["safety", "Safety & recalls", ShieldAlert],
+                  ["tracking", "GPS tracking", Globe],
+                  ["verification", "Seal verification", Camera],
                   ["passports", "QR food passports", QrCode],
                 ].map(([key, label, Icon]) => (
                   <button
@@ -957,6 +1010,454 @@ function PassportCenter({ batches }: { batches: Batch[] }) {
       </div>
       {!batches.length && (
         <Empty text="Register a batch to generate its public food passport." />
+      )}
+    </>
+  );
+}
+
+function GPSTrackingCenter({ cardVisits, batches }: { cardVisits: CardVisit[]; batches: Batch[] }) {
+  return (
+    <>
+      <p className="text-xs font-bold tracking-[.15em] text-forest">
+        GPS TRACKING
+      </p>
+      <div className="mt-2 flex items-center gap-2">
+        <h1 className="text-2xl font-bold sm:text-3xl">Card visit locations.</h1>
+        <FeatureGuide text="Track where and when your food passports are being viewed. Each visit captures GPS location data." />
+      </div>
+      <p className="mt-2 text-sm text-slate-600">
+        Monitor which cards are being scanned and from which locations.
+      </p>
+      <section className="mt-6 overflow-hidden rounded-2xl border border-emerald-950/5 bg-white">
+        {cardVisits.length ? (
+          <div className="divide-y divide-emerald-950/5">
+            {cardVisits.map((visit) => (
+              <article
+                key={visit.id}
+                className="flex flex-col gap-3 border-b border-emerald-950/5 p-5 last:border-0 md:flex-row md:items-center md:justify-between"
+              >
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="font-bold">{visit.product_name}</h2>
+                    <span className="text-xs text-slate-500">{visit.batch_public_id}</span>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-600">
+                    <MapPin size={14} className="inline mr-1" />
+                    {visit.location_name || `${visit.latitude.toFixed(4)}, ${visit.longitude.toFixed(4)}`}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Visited on {new Date(visit.visited_at).toLocaleString("en-IN")}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <a
+                    href={`https://www.google.com/maps?q=${visit.latitude},${visit.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 rounded-lg border border-emerald-950/10 px-3 py-2 font-bold text-forest hover:bg-emerald-50"
+                  >
+                    <Globe size={14} /> View on map
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <Empty text="No card visits recorded yet. Share your QR codes to start tracking visits." />
+        )}
+      </section>
+    </>
+  );
+}
+
+function SealVerificationCenter({ visualVerifications, batches, refresh }: { visualVerifications: VisualVerification[]; batches: Batch[]; refresh: () => Promise<void> }) {
+  const [showUploadForm, setShowUploadForm] = useState(false);
+  const [selectedBatch, setSelectedBatch] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
+  const [selectedVerification, setSelectedVerification] = useState<VisualVerification | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  const handleUpload = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setUploading(true);
+    const formData = new FormData(event.currentTarget);
+    
+    const { token } = getAuth();
+    const headers = {
+      "Authorization": `Bearer ${token}`
+    };
+
+    try {
+      const response = await fetch("/api/visual-verification", {
+        method: "POST",
+        headers,
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Upload failed");
+      }
+
+      setShowUploadForm(false);
+      setPreviewImage(null);
+      setSelectedBatch("");
+      await refresh();
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert(error instanceof Error ? error.message : "Failed to upload verification");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleVerify = async (verificationId: string, status: string, notes: string) => {
+    const { token } = getAuth();
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    };
+
+    try {
+      const response = await fetch("/api/visual-verification/verify", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          verification_id: verificationId,
+          verification_status: status,
+          verification_notes: notes
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Verification failed");
+      }
+
+      setSelectedVerification(null);
+      await refresh();
+    } catch (error) {
+      console.error("Verification error:", error);
+      alert(error instanceof Error ? error.message : "Failed to verify");
+    }
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith("image/")) {
+        setPreviewImage(URL.createObjectURL(file));
+      }
+    }
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setPreviewImage(URL.createObjectURL(e.target.files[0]));
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "verified_intact": return "from-emerald-400 to-emerald-600";
+      case "verified_tampered": return "from-rose-400 to-rose-600";
+      case "flagged_review": return "from-amber-400 to-amber-600";
+      default: return "from-slate-400 to-slate-600";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "verified_intact": return <CheckCircle2 size={20} className="text-white" />;
+      case "verified_tampered": return <AlertTriangle size={20} className="text-white" />;
+      case "flagged_review": return <CircleAlert size={20} className="text-white" />;
+      default: return <Clock size={20} className="text-white" />;
+    }
+  };
+
+  return (
+    <>
+      <p className="text-xs font-bold tracking-[.15em] text-forest">
+        SEAL VERIFICATION
+      </p>
+      <div className="mt-2 flex items-center gap-2">
+        <h1 className="text-2xl font-bold sm:text-3xl">Tamper-evident seal verification.</h1>
+        <FeatureGuide text="Upload images of tamper-evident seals and visual markers. AI can automatically verify seal integrity or flag for manual review." />
+      </div>
+      <p className="mt-2 text-sm text-slate-600">
+        Verify seal integrity and detect tampering using visual verification.
+      </p>
+      
+      <div className="mt-6">
+        <button
+          onClick={() => setShowUploadForm(true)}
+          className="group relative flex items-center gap-3 rounded-2xl bg-gradient-to-r from-forest to-emerald-700 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition-all hover:shadow-xl hover:shadow-emerald-900/30 hover:scale-105"
+        >
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/20 transition-all group-hover:bg-white/30">
+            <Upload size={20} />
+          </div>
+          <span>Upload New Verification</span>
+          <ChevronRight size={18} className="transition-transform group-hover:translate-x-1" />
+        </button>
+      </div>
+
+      <section className="mt-8">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-forest">Recent Verifications</h2>
+          <span className="text-sm text-slate-500">{visualVerifications.length} total</span>
+        </div>
+        
+        {visualVerifications.length ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {visualVerifications.map((verification) => (
+              <motion.article
+                key={verification.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="group relative overflow-hidden rounded-2xl border border-emerald-950/5 bg-white shadow-sm transition-all hover:shadow-lg hover:border-emerald-500/20"
+              >
+                <div className={`absolute top-0 right-0 p-3 bg-gradient-to-br ${getStatusColor(verification.verification_status)}`}>
+                  {getStatusIcon(verification.verification_status)}
+                </div>
+                
+                <div className="p-4">
+                  <div className="mb-3">
+                    <h3 className="font-bold text-forest">{verification.batch_public_id}</h3>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {new Date(verification.created_at).toLocaleDateString("en-IN", { 
+                        month: 'short', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                  
+                  <div className="relative mb-4 overflow-hidden rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 aspect-square">
+                    <img 
+                      src={verification.image_url} 
+                      alt="Seal verification" 
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                  </div>
+                  
+                  <div className="mb-3 flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1 text-slate-500">
+                      <Camera size={12} />
+                      {verification.verification_method.replace(/_/g, ' ')}
+                    </span>
+                    {verification.ai_confidence > 0 && (
+                      <span className="flex items-center gap-1 text-slate-500">
+                        <ShieldCheck size={12} />
+                        {(verification.ai_confidence * 100).toFixed(0)}% confidence
+                      </span>
+                    )}
+                  </div>
+                  
+                  {verification.verification_status === "pending" ? (
+                    <button
+                      onClick={() => setSelectedVerification(verification)}
+                      className="w-full rounded-xl bg-forest px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-emerald-700"
+                    >
+                      Review Seal
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setSelectedVerification(verification)}
+                      className="w-full rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-bold text-slate-700 transition-all hover:bg-slate-200"
+                    >
+                      Edit Status
+                    </button>
+                  )}
+                </div>
+              </motion.article>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/50 py-12">
+            <div className="grid h-16 w-16 place-items-center rounded-full bg-emerald-100 text-emerald-600">
+              <Camera size={32} />
+            </div>
+            <h3 className="mt-4 text-lg font-bold text-forest">No verifications yet</h3>
+            <p className="mt-2 text-sm text-slate-600">Upload your first seal verification to get started</p>
+          </div>
+        )}
+      </section>
+
+      {showUploadForm && (
+        <Modal title="Upload Seal Verification" close={() => setShowUploadForm(false)}>
+          <form onSubmit={handleUpload} className="grid gap-5">
+            <label className="text-sm font-bold">
+              Select Batch
+              <select
+                name="batch_public_id"
+                required
+                value={selectedBatch}
+                onChange={(e) => setSelectedBatch(e.target.value)}
+                className="mt-2 w-full rounded-xl border border-emerald-950/10 bg-white px-4 py-3 font-normal outline-none focus:border-forest focus:ring-2 focus:ring-forest/20"
+              >
+                <option value="">Choose a batch...</option>
+                {batches.map((batch) => (
+                  <option key={batch.public_id} value={batch.public_id}>
+                    {batch.product_name} ({batch.public_id})
+                  </option>
+                ))}
+              </select>
+            </label>
+            
+            <label className="text-sm font-bold">
+              Seal Image
+              <div
+                className={`mt-2 relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 transition-all ${
+                  dragActive 
+                    ? 'border-forest bg-emerald-50' 
+                    : 'border-emerald-200 bg-emerald-50/50 hover:border-emerald-400 hover:bg-emerald-50'
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                {previewImage ? (
+                  <div className="relative">
+                    <img 
+                      src={previewImage} 
+                      alt="Preview" 
+                      className="h-48 w-48 rounded-xl object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPreviewImage(null)}
+                      className="absolute -right-2 -top-2 grid h-8 w-8 place-items-center rounded-full bg-rose-500 text-white shadow-lg"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <div className="grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-600 mx-auto">
+                      <Upload size={24} />
+                    </div>
+                    <p className="mt-3 text-sm font-medium text-slate-600">
+                      Drag & drop seal image here
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">or click to browse</p>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  name="image"
+                  required
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="absolute inset-0 cursor-pointer opacity-0"
+                />
+              </div>
+            </label>
+            
+            <label className="text-sm font-bold">
+              Verification Method
+              <select
+                name="verification_method"
+                className="mt-2 w-full rounded-xl border border-emerald-950/10 bg-white px-4 py-3 font-normal outline-none focus:border-forest focus:ring-2 focus:ring-forest/20"
+              >
+                <option value="manual">Manual Review</option>
+                <option value="ai_opencv">AI OpenCV Analysis</option>
+                <option value="ai_advanced">AI Advanced Analysis</option>
+              </select>
+            </label>
+            
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUploadForm(false);
+                  setPreviewImage(null);
+                  setSelectedBatch("");
+                }}
+                className="rounded-xl px-5 py-3 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={uploading}
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-forest to-emerald-700 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition-all hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {uploading ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload size={16} />
+                    Upload Verification
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {selectedVerification && (
+        <Modal title="Review Seal Verification" close={() => setSelectedVerification(null)}>
+          <div className="space-y-4">
+            <div className="relative overflow-hidden rounded-xl border border-emerald-950/10">
+              <img 
+                src={selectedVerification.image_url} 
+                alt="Seal to review" 
+                className="w-full max-h-64 object-contain"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                <p className="text-xs font-medium text-white/80">
+                  {selectedVerification.batch_public_id}
+                </p>
+              </div>
+            </div>
+            
+            <div className="grid gap-2">
+              <button
+                onClick={() => handleVerify(selectedVerification.id, "verified_intact", "Seal appears intact and properly sealed")}
+                className="flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-xs font-bold text-white"
+              >
+                <CheckCircle2 size={16} />
+                <span>Mark as Intact</span>
+              </button>
+              
+              <button
+                onClick={() => handleVerify(selectedVerification.id, "verified_tampered", "Seal appears broken or tampered")}
+                className="flex items-center justify-center gap-2 rounded-lg bg-rose-600 px-4 py-3 text-xs font-bold text-white"
+              >
+                <AlertTriangle size={16} />
+                <span>Mark as Tampered</span>
+              </button>
+              
+              <button
+                onClick={() => handleVerify(selectedVerification.id, "flagged_review", "Requires further investigation")}
+                className="flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-3 text-xs font-bold text-white"
+              >
+                <CircleAlert size={16} />
+                <span>Flag for Review</span>
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
     </>
   );
