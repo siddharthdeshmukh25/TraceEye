@@ -5,7 +5,8 @@ const TOKEN_EXPIRY = '24h'; // Token expires in 24 hours
 
 export interface TokenPayload {
   id: string;
-  email: string;
+  email?: string;
+  phone?: string;
   full_name?: string;
   auth_provider: string;
   exp?: number;

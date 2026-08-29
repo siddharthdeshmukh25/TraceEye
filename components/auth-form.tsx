@@ -1,6 +1,6 @@
 "use client";
 
-import { Leaf, LockKeyhole, Mail, UserRound } from "lucide-react";
+import { Leaf, LockKeyhole, Phone, UserRound } from "lucide-react";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -10,11 +10,23 @@ import { setAuth } from "@/lib/auth";
 export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [countryCode, setCountryCode] = useState("+91");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const isSignup = mode === "signup";
+
+  const countryCodes = [
+    { code: "+91", name: "India", length: 10 },
+    { code: "+1", name: "USA", length: 10 },
+    { code: "+44", name: "UK", length: 10 },
+    { code: "+61", name: "Australia", length: 9 },
+    { code: "+971", name: "UAE", length: 9 },
+    { code: "+974", name: "Qatar", length: 8 },
+    { code: "+966", name: "Saudi Arabia", length: 9 },
+    { code: "+968", name: "Oman", length: 8 },
+  ];
 
   const handleGoogleSignIn = async () => {
     try {
@@ -53,24 +65,27 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
     }
   };
 
-  const handleEmailAuth = async (event: FormEvent<HTMLFormElement>) => {
+  const handlePhoneAuth = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
     
-    if (!email.includes("@") || password.length < 6 || (isSignup && !name.trim())) {
-      setError("Please enter a valid email and a password with at least 6 characters.");
+    const selectedCountry = countryCodes.find(c => c.code === countryCode);
+    const requiredLength = selectedCountry?.length || 10;
+    
+    if (!phone || phone.length !== requiredLength || password.length < 6 || (isSignup && !name.trim())) {
+      setError(`Please enter a valid ${selectedCountry?.name || ''} phone number (${requiredLength} digits) and a password with at least 6 characters.`);
       return;
     }
 
     try {
       setLoading(true);
       
-      // For email/password, use MongoDB-based auth
-      const result = await fetch("/api/auth/email", {
+      // For phone/password, use MongoDB-based auth
+      const result = await fetch("/api/auth/phone", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email,
+          phone: `${countryCode}${phone}`,
           password,
           name: isSignup ? name.trim() : undefined,
           mode: isSignup ? "signup" : "login"
@@ -149,11 +164,11 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
           
           <div className="my-6 flex items-center gap-3 text-xs font-semibold text-slate-400">
             <span className="h-px flex-1 bg-slate-200"/>
-            OR CONTINUE WITH EMAIL
+            OR CONTINUE WITH PHONE
             <span className="h-px flex-1 bg-slate-200"/>
           </div>
           
-          <form onSubmit={handleEmailAuth} className="space-y-5">
+          <form onSubmit={handlePhoneAuth} className="space-y-5">
             {isSignup && (
               <label className="block text-sm font-bold">
                 Full name
@@ -171,18 +186,37 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
             )}
             
             <label className="block text-sm font-bold">
-              Email address
-              <div className="relative mt-2">
-                <Mail className="absolute left-3 top-3 text-slate-400" size={18}/>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-3 outline-none transition focus:border-forest"
-                  placeholder="name@company.com"
-                  required
-                />
+              Phone number
+              <div className="relative mt-2 flex gap-2">
+                <select
+                  value={countryCode}
+                  onChange={(event) => setCountryCode(event.target.value)}
+                  className="w-28 rounded-xl border border-slate-200 bg-white py-3 px-3 outline-none transition focus:border-forest text-sm"
+                >
+                  {countryCodes.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.code}
+                    </option>
+                  ))}
+                </select>
+                <div className="relative flex-1">
+                  <Phone className="absolute left-3 top-3 text-slate-400" size={18}/>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(event) => {
+                      const value = event.target.value.replace(/\D/g, ''); // Remove non-numeric characters
+                      setPhone(value);
+                    }}
+                    className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-3 outline-none transition focus:border-forest"
+                    placeholder={countryCodes.find(c => c.code === countryCode)?.name === "India" ? "9876543210" : "1234567890"}
+                    required
+                  />
+                </div>
               </div>
+              <p className="mt-1 text-xs text-slate-500">
+                {countryCodes.find(c => c.code === countryCode)?.name} - {countryCodes.find(c => c.code === countryCode)?.length} digits required
+              </p>
             </label>
             
             <label className="block text-sm font-bold">

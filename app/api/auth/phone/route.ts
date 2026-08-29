@@ -1,102 +1,110 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/mongodb";
-import { badRequest, id, publicId } from "@/lib/api";
+import { badRequest } from "@/lib/api";
+import { generateToken } from "@/lib/token";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const { phone, password, name, mode } = await request.json();
+  
+  if (!phone || !password || !mode) {
+    return badRequest("phone, password, and mode are required");
+  }
+
+  if (mode === "signup" && !name) {
+    return badRequest("name is required for signup");
+  }
+
   try {
-    const body = await request.json();
-    const { phone_number, firebase_uid, display_name, email } = body;
+    const users = (await db()).collection("users");
     
-    if (!phone_number || !firebase_uid) {
-      return badRequest("Phone number and Firebase UID are required");
-    }
-    
-    const database = await db();
-    
-    // Check if user exists with this phone number or Firebase UID
-    let user = await database.collection("users").findOne({
-      $or: [
-        { phone_number: phone_number },
-        { firebase_uid: firebase_uid }
-      ]
-    });
-    
-    if (user) {
-      // Update existing user
-      await database.collection("users").updateOne(
-        { _id: user._id },
-        {
-          $set: {
-            phone_number: phone_number,
-            firebase_uid: firebase_uid,
-            display_name: display_name || user.display_name,
-            email: email || user.email,
-            auth_provider: "phone",
-            updated_at: new Date()
-          }
-        }
-      );
-    } else {
+    if (mode === "signup") {
+      // Check if user already exists
+      const existingUser = await users.findOne({ phone });
+      if (existingUser) {
+        return NextResponse.json(
+          { detail: "User with this phone number already exists" },
+          { status: 409 }
+        );
+      }
+
       // Create new user
-      const newUser = {
-        phone_number: phone_number,
-        firebase_uid: firebase_uid,
-        display_name: display_name || "Farmer",
-        email: email || null,
+      const result = await users.insertOne({
+        phone,
+        password, // Note: In production, you should hash this password!
+        name: name.trim(),
         auth_provider: "phone",
         created_at: new Date(),
-        updated_at: new Date()
-      };
+        updated_at: new Date(),
+      });
+
+      const user = await users.findOne({ _id: result.insertedId });
+      if (!user) {
+        return NextResponse.json(
+          { detail: "Could not create user" },
+          { status: 500 }
+        );
+      }
       
-      const result = await database.collection("users").insertOne(newUser);
-      user = { ...newUser, _id: result.insertedId };
-    }
-    
-    // Generate JWT token
-    const token = generateJWT(user._id.toString(), user.firebase_uid);
-    
-    return NextResponse.json({
-      user: {
+      // Generate JWT token
+      const token = generateToken({
         id: user._id.toString(),
-        phone_number: user.phone_number,
-        display_name: user.display_name,
-        email: user.email,
-        auth_provider: user.auth_provider
-      },
-      token
-    }, { status: 200 });
-    
+        phone: user.phone,
+        full_name: user.name,
+        auth_provider: "phone"
+      });
+
+      return NextResponse.json({
+        token,
+        user: {
+          id: user._id.toString(),
+          full_name: user.name,
+          phone: user.phone,
+          auth_provider: "phone"
+        }
+      });
+    } else if (mode === "login") {
+      // Find user and verify password
+      const user = await users.findOne({ phone });
+      if (!user) {
+        return NextResponse.json(
+          { detail: "Invalid phone number or password" },
+          { status: 401 }
+        );
+      }
+
+      if (user.password !== password) {
+        return NextResponse.json(
+          { detail: "Invalid phone number or password" },
+          { status: 401 }
+        );
+      }
+
+      // Generate JWT token
+      const token = generateToken({
+        id: user._id.toString(),
+        phone: user.phone,
+        full_name: user.name || "TraceEye member",
+        auth_provider: "phone"
+      });
+
+      return NextResponse.json({
+        token,
+        user: {
+          id: user._id.toString(),
+          full_name: user.name || "TraceEye member",
+          phone: user.phone,
+          auth_provider: "phone"
+        }
+      });
+    }
+
+    return badRequest("mode must be signup or login");
   } catch (error) {
-    console.error("Phone auth error:", error);
     return NextResponse.json(
-      { detail: error instanceof Error ? error.message : "Phone authentication failed" },
+      { detail: "Authentication failed" },
       { status: 500 }
     );
   }
-}
-
-// Simple JWT generation (in production, use proper library)
-function generateJWT(userId: string, firebaseUid: string): string {
-  // This is a simplified version - in production use proper JWT library
-  const header = {
-    alg: "HS256",
-    typ: "JWT"
-  };
-  
-  const payload = {
-    id: userId,
-    firebase_uid: firebaseUid,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // 24 hours
-  };
-  
-  // In production, use proper JWT signing
-  // For now, return a base64 encoded version (NOT SECURE - for demo only)
-  const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64');
-  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64');
-  const signature = Buffer.from(`${encodedHeader}.${encodedPayload}`).toString('base64');
-  
-  return `${encodedHeader}.${encodedPayload}.${signature}`;
 }
