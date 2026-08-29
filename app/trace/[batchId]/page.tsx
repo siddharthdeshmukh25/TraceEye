@@ -2,6 +2,7 @@ import { CheckCircle2, CircleAlert, Leaf, MapPin, PackageCheck, ShieldCheck, Clo
 import { StatusBadge } from "../../../components/status-badge";
 import ShareButton from "../../../components/share-button";
 import GPSTracker from "../../../components/gps-tracker";
+import SupplyChainTimeline, { createMockSupplyChainData } from "../../../components/supply-chain-timeline";
 
 const api = process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000";
 
@@ -202,58 +203,9 @@ export default async function TracePage({ params }: { params: { batchId: string 
           </div>
         </section>
 
-        {/* Compact Timeline */}
+        {/* 4-Stage Supply Chain Timeline */}
         <section className="mt-4">
-          <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-forest">
-            <ShieldCheck size={16} />
-            Journey
-          </h2>
-          <div className="space-y-2">
-            {[
-              {
-                title: "Passport created",
-                subtitle: `${batch.origin_name}`,
-                icon: PackageCheck,
-                verified: true,
-                date: createdDate.toLocaleDateString("en-US", { month: 'short', day: 'numeric' })
-              },
-              ...batch.handovers.map((handover) => ({
-                title: handover.receiver,
-                subtitle: `${handover.location || "Location"} · ${handover.weight_kg}kg`,
-                icon: MapPin,
-                verified: handover.status === "verified",
-                date: new Date(handover.created_at).toLocaleDateString("en-US", { month: 'short', day: 'numeric' })
-              }))
-            ].map(({ title, subtitle, icon: Icon, verified, date }, index) => (
-              <div 
-                key={`${title}-${index}`} 
-                className="flex gap-3 rounded-xl border border-emerald-950/5 bg-white p-3"
-              >
-                <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${
-                  verified ? "bg-mint text-forest" : "bg-slate-100 text-slate-500"
-                }`}>
-                  <Icon size={16}/>
-                </span>
-                <div className="flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-bold text-forest">{title}</p>
-                      <p className="text-[10px] text-slate-500">{subtitle}</p>
-                    </div>
-                    <span className="text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded">
-                      {date}
-                    </span>
-                  </div>
-                  {verified && (
-                    <p className="mt-1 flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded inline-flex">
-                      <ShieldCheck size={10}/>
-                      Verified
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+          <SupplyChainTimeline stages={createMockSupplyChainData()} />
         </section>
 
         {/* Compact Ingredients */}

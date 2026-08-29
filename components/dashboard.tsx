@@ -34,6 +34,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import html2canvas from "html2canvas";
 import { StatusBadge } from "./status-badge";
 import { getAuth, clearAuth, getUserId, isAuthenticated } from "@/lib/auth";
+import SolarTelemetryDashboard from "./solar-telemetry-dashboard";
+import SpoilageRiskMonitor from "./spoilage-risk-monitor";
+import PersonaToggle, { getPersonaWidgets, type Persona } from "./persona-toggle";
+import PersonaDashboard from "./persona-dashboard";
 
 type Summary = {
   total_batches: number;
@@ -160,6 +164,7 @@ export default function Dashboard() {
   const [visualVerifications, setVisualVerifications] = useState<VisualVerification[]>([]);
   const [session, setSession] = useState<Session>({});
   const [tab, setTab] = useState("overview");
+  const [currentPersona, setCurrentPersona] = useState<Persona>("farmer");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [notice, setNotice] = useState("");
@@ -388,6 +393,10 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <PersonaToggle
+                currentPersona={currentPersona}
+                onPersonaChange={setCurrentPersona}
+              />
               <button
                 onClick={load}
                 title={
@@ -472,6 +481,20 @@ export default function Dashboard() {
                   </article>
                 ))}
               </div>
+
+              {/* Solar Smart Storage Telemetry Dashboard */}
+              <div className="mt-6">
+                <SolarTelemetryDashboard />
+              </div>
+
+              {/* Dynamic Spoilage Index Monitor */}
+              <div className="mt-6">
+                <SpoilageRiskMonitor />
+              </div>
+
+              {/* Multi-Persona Dashboard */}
+              <PersonaDashboard persona={currentPersona} />
+
               <div className="mt-6 grid gap-5 xl:grid-cols-[1.35fr_.85fr]">
                 <section className="rounded-2xl border border-emerald-950/5 bg-white p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-3">
