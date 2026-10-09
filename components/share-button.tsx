@@ -39,9 +39,9 @@ export default function ShareButton() {
   return (
     <button 
       onClick={handleShare}
-      className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-colors"
+      className="group flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-emerald-500/30 transition-all hover:from-emerald-400 hover:to-teal-400 hover:shadow-lg hover:shadow-emerald-500/40 active:scale-95"
     >
-      <Share2 size={16} />
+      <Share2 size={16} className="transition-transform group-hover:rotate-12" />
       <span className="hidden sm:inline">{copied ? 'Copied!' : 'Share'}</span>
     </button>
   );
