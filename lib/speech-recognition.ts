@@ -21,8 +21,12 @@ type SpeechRecognitionInstance = {
 
 declare global {
   interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
+    SpeechRecognition?: {
+      new (): any;
+    };
+    webkitSpeechRecognition?: {
+      new (): any;
+    };
   }
 }
 
@@ -35,58 +39,64 @@ class SpeechRecognitionManager {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        this.recognition = new SpeechRecognition();
-        this.recognition.continuous = true;
-        this.recognition.interimResults = true;
-        this.recognition.lang = 'en-US';
+      const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognitionConstructor) {
+        try {
+          this.recognition = new SpeechRecognitionConstructor();
+          this.recognition.continuous = true;
+          this.recognition.interimResults = true;
+          this.recognition.lang = 'en-US';
 
-        this.recognition.onresult = (event: SpeechRecognitionEvent) => {
-          const last = event.results.length - 1;
-          const transcript = event.results[last][0].transcript;
-          
-          if (this.onResultCallback) {
-            this.onResultCallback(transcript);
-          }
-        };
+          this.recognition.onresult = (event: SpeechRecognitionEvent) => {
+            const last = event.results.length - 1;
+            const transcript = event.results[last][0].transcript;
 
-        this.recognition.onerror = (event: any) => {
-          console.error('Speech recognition error:', event.error);
-          if (this.onErrorCallback) {
-            this.onErrorCallback(event.error);
-          }
-          this.isListening = false;
-          if (this.onStatusCallback) {
-            this.onStatusCallback('idle');
-          }
-        };
+            if (this.onResultCallback) {
+              this.onResultCallback(transcript);
+            }
+          };
 
-        this.recognition.onend = () => {
-          if (this.isListening) {
-            // Restart if still supposed to be listening
-            setTimeout(() => {
-              if (this.isListening && this.recognition) {
-                try {
-                  this.recognition.start();
-                } catch (e) {
-                  console.error('Failed to restart speech recognition:', e);
-                }
-              }
-            }, 100);
-          } else {
+          this.recognition.onerror = (event: any) => {
+            console.error('Speech recognition error:', event.error);
+            if (this.onErrorCallback) {
+              this.onErrorCallback(event.error);
+            }
+            this.isListening = false;
             if (this.onStatusCallback) {
               this.onStatusCallback('idle');
             }
-          }
-        };
+          };
+
+          this.recognition.onend = () => {
+            if (this.isListening) {
+              // Restart if still supposed to be listening
+              setTimeout(() => {
+                if (this.isListening && this.recognition) {
+                  try {
+                    this.recognition.start();
+                  } catch (e) {
+                    console.error('Failed to restart speech recognition:', e);
+                  }
+                }
+              }, 100);
+            } else {
+              if (this.onStatusCallback) {
+                this.onStatusCallback('idle');
+              }
+            }
+          };
+        } catch (error) {
+          console.error('Failed to initialize SpeechRecognition:', error);
+          this.recognition = null;
+        }
       }
     }
   }
 
   isSupported(): boolean {
-    return typeof window !== 'undefined' && 
-           (window.SpeechRecognition || window.webkitSpeechRecognition);
+    if (typeof window === 'undefined') return false;
+    const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    return !!SpeechRecognitionConstructor;
   }
 
   startListening(
