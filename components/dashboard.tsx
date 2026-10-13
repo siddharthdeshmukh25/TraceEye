@@ -392,12 +392,14 @@ export default function Dashboard() {
               <span className="brand-wordmark text-[22px]">TraceEye</span>
             </div>
             <div className="hidden lg:flex items-center gap-4">
-              <p className="text-xs font-bold tracking-[.14em] text-forest">
-                TRACEABILITY OPERATIONS
-              </p>
-              <p className="text-sm text-slate-500">
-                Your shared evidence workspace
-              </p>
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
+                <p className="text-xs font-bold tracking-[.14em] text-forest">
+                  TRACEABILITY OPERATIONS
+                </p>
+                <p className="mt-0.5 text-sm text-slate-500">
+                  Your shared evidence workspace
+                </p>
+              </motion.div>
             </div>
           </div>
           <div className="flex items-center gap-2">
