@@ -127,12 +127,13 @@ export default function PersonaToggle({ currentPersona, onPersonaChange }: Perso
               transition={{ duration: 0.18 }}
               className="fixed inset-0 z-40"
               onClick={() => setIsOpen(false)}
-            />              <motion.div
+            />
+            <motion.div
               initial={{ opacity: 0, y: -8, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -4, scale: 0.96 }}
               transition={{ duration: 0.22, ease: 'easeOut' }}
-              className="absolute right-0 top-full z-50 mt-3 w-72 rounded-xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/10 p-2 ring-1 ring-emerald-950/10"
+              className="absolute right-0 top-full z-50 mt-3 w-72 rounded-xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/10 p-2"
             >
               {PERSONAS.map((persona) => (
                 <PersonaItemButton
