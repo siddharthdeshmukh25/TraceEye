@@ -4,6 +4,7 @@ import { ExternalLink, Download } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useState, useRef } from "react";
 import html2canvas from "html2canvas";
+import { AudioCtx } from "@/lib/audio";
 
 interface AgentCardProps {
   id: string;
@@ -31,9 +32,19 @@ export default function AgentCard({
 
   useEffect(() => {
     setMounted(true);
+    AudioCtx.preload('ui_click_3d', 'ui_click_deep');
   }, []);
 
+  const playClickSound = () => {
+    try {
+      AudioCtx.play("ui_click_3d");
+    } catch {
+      /* audio not ready */
+    }
+  };
+
   const handleDownload = async () => {
+    playClickSound();
     if (!cardRef.current) return;
     
     try {

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { X, Camera, ScanLine, RefreshCw, QrCode, CheckCircle2 } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
+import { AudioCtx } from "@/lib/audio";
 
 interface QRScannerProps {
   onClose: () => void;
@@ -17,6 +18,18 @@ export default function QRScanner({ onClose, onScan }: QRScannerProps) {
   const [detectedCode, setDetectedCode] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const readerId = useRef<string>("qr-reader");
+
+  const playClickSound = () => {
+    try {
+      AudioCtx.play("ui_click_3d");
+    } catch {
+      /* audio not ready */
+    }
+  };
+
+  useEffect(() => {
+    AudioCtx.preload('ui_click_3d', 'ui_click_deep');
+  }, []);
 
   const startScanner = async () => {
     try {
@@ -84,6 +97,7 @@ export default function QRScanner({ onClose, onScan }: QRScannerProps) {
   };
 
   const handleConfirmScan = () => {
+    playClickSound();
     if (detectedCode) {
       onScan(detectedCode);
       stopScanner();
@@ -133,6 +147,7 @@ export default function QRScanner({ onClose, onScan }: QRScannerProps) {
           </div>
           <button
             onClick={() => {
+              playClickSound();
               stopScanner();
               onClose();
             }}
@@ -156,7 +171,10 @@ export default function QRScanner({ onClose, onScan }: QRScannerProps) {
               </div>
               <p className="text-sm font-medium text-slate-300">{error}</p>
               <button
-                onClick={startScanner}
+                onClick={() => {
+                  playClickSound();
+                  startScanner();
+                }}
                 className="mt-4 px-6 py-3 rounded-xl bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/30"
               >
                 Retry Camera
@@ -205,7 +223,10 @@ export default function QRScanner({ onClose, onScan }: QRScannerProps) {
                 Confirm Scan
               </button>
               <button
-                onClick={() => setDetectedCode(null)}
+                onClick={() => {
+                  playClickSound();
+                  setDetectedCode(null);
+                }}
                 className="w-full py-3 rounded-xl bg-slate-200 text-slate-700 font-bold text-sm hover:bg-slate-300 transition-colors flex items-center justify-center gap-2"
               >
                 <RefreshCw size={16} />

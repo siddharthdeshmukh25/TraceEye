@@ -2,6 +2,7 @@
 
 import { Share2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { AudioCtx } from "@/lib/audio";
 
 export default function ShareButton() {
   const [copied, setCopied] = useState(false);
@@ -9,9 +10,19 @@ export default function ShareButton() {
 
   useEffect(() => {
     setMounted(true);
+    AudioCtx.preload('ui_click_3d', 'ui_click_deep');
   }, []);
 
+  const playClickSound = () => {
+    try {
+      AudioCtx.play("ui_click_3d");
+    } catch {
+      /* audio not ready */
+    }
+  };
+
   const handleShare = async () => {
+    playClickSound();
     if (!mounted) return;
     
     const shareUrl = window.location.href;

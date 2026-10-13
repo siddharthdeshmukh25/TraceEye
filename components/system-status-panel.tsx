@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Database, 
-  ShieldCheck, 
-  AlertTriangle, 
-  Download, 
-  Upload, 
-  RefreshCw, 
-  Clock, 
-  HardDrive, 
+import {
+  Database,
+  ShieldCheck,
+  AlertTriangle,
+  Download,
+  Upload,
+  RefreshCw,
+  Clock,
+  HardDrive,
   Activity,
   CheckCircle2,
   XCircle,
@@ -18,6 +18,7 @@ import {
   X as CloseIcon
 } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
+import { AudioCtx } from "@/lib/audio";
 
 interface HealthStatus {
   database: 'healthy' | 'degraded' | 'down';
@@ -49,13 +50,24 @@ export default function SystemStatusPanel() {
     const checkAuth = () => {
       setIsUserAuthenticated(isAuthenticated());
     };
-    
+
     checkAuth();
-    
+
+    // Preload audio
+    AudioCtx.preload('ui_click_3d', 'ui_click_deep');
+
     // Listen for auth changes
     window.addEventListener('auth-change', checkAuth);
     return () => window.removeEventListener('auth-change', checkAuth);
   }, []);
+
+  const playClickSound = () => {
+    try {
+      AudioCtx.play("ui_click_3d");
+    } catch {
+      /* audio not ready */
+    }
+  };
 
   // Real health status check
   useEffect(() => {
@@ -160,6 +172,7 @@ export default function SystemStatusPanel() {
   };
 
   const handleCreateBackup = async () => {
+    playClickSound();
     setIsCreatingBackup(true);
     setBackupMessage(null);
     
@@ -201,6 +214,7 @@ export default function SystemStatusPanel() {
   };
 
   const handleRestoreBackup = () => {
+    playClickSound();
     setIsRestoring(true);
     setBackupMessage(null);
     
@@ -265,6 +279,7 @@ export default function SystemStatusPanel() {
   };
 
   const handleClearCache = () => {
+    playClickSound();
     try {
       const caches = ['traceeye_cache_batches', 'traceeye_cache_producers', 'traceeye_cache_handovers', 'traceeye_cache_alerts', 'traceeye_cache_cardVisits'];
       
@@ -322,10 +337,13 @@ export default function SystemStatusPanel() {
     <div className="fixed bottom-4 right-4 z-50">
       {/* Status Indicator Button */}
       <button
-        onClick={() => setShowDetails(!showDetails)}
+        onClick={() => {
+          playClickSound();
+          setShowDetails(!showDetails);
+        }}
         className={`flex items-center gap-2 rounded-full px-4 py-2 shadow-lg transition-all ${
-          healthStatus?.database === 'healthy' 
-            ? 'bg-emerald-500 text-white hover:bg-emerald-600' 
+          healthStatus?.database === 'healthy'
+            ? 'bg-emerald-500 text-white hover:bg-emerald-600'
             : healthStatus?.database === 'degraded'
             ? 'bg-amber-500 text-white hover:bg-amber-600'
             : 'bg-rose-500 text-white hover:bg-rose-600'
@@ -349,7 +367,10 @@ export default function SystemStatusPanel() {
               System Status
             </h3>
             <button
-              onClick={() => setShowDetails(false)}
+              onClick={() => {
+                playClickSound();
+                setShowDetails(false);
+              }}
               className="rounded-lg p-1 hover:bg-slate-100 transition-colors"
             >
               <CloseIcon size={16} className="text-slate-400" />
