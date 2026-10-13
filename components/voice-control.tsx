@@ -88,7 +88,7 @@ export default function VoiceControl({ onCommand }: VoiceControlProps) {
   }
 
   return (
-    <div className="relative">
+    <div className="relative z-[70]">
       <motion.button
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
@@ -109,7 +109,7 @@ export default function VoiceControl({ onCommand }: VoiceControlProps) {
             initial={{ opacity: 0, y: 10, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.9 }}
-            className="absolute right-0 top-12 z-50 w-72 rounded-2xl border border-emerald-950/10 bg-white p-4 shadow-2xl"
+            className="absolute right-0 top-12 z-[90] w-72 rounded-2xl border border-emerald-950/10 bg-white p-4 shadow-2xl"
           >
             <div className="flex items-center gap-2 mb-3">
               <div className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white">

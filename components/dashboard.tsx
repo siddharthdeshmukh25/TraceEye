@@ -491,7 +491,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, x: 6 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.25, ease: 'easeOut', delay: 0.054 }}
-              className="hidden lg:block"
+              className="hidden lg:block relative z-[60]"
             >
               <PersonaToggle
                 currentPersona={currentPersona}
