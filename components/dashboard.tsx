@@ -403,35 +403,52 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                console.log('QR Scanner button clicked');
-                setShowQRScanner(true);
-              }}
-              className="grid h-8 w-8 place-items-center rounded-lg bg-forest text-white hover:bg-emerald-700 transition-colors"
-              title="Scan QR"
+            <motion.div
+              initial={{ opacity: 0, x: 6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
             >
-              <QrCode size={16} />
-            </button>
-            <div className="hidden lg:flex">
+              <button
+                onClick={() => {
+                  console.log('QR Scanner button clicked');
+                  setShowQRScanner(true);
+                }}
+                className="grid h-9 w-9 place-items-center rounded-xl bg-forest text-white hover:bg-emerald-700 transition-colors shadow-[1px_1px_0_rgba(0,0,0,0.08)] active:shadow-[0_0_0_rgba(0,0,0,0)]"
+                title="Scan QR"
+              >
+                <QrCode size={18} />
+              </button>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, ease: 'easeOut', delay: 0.14 }}
+              className="hidden lg:block"
+            >
               <PersonaToggle
                 currentPersona={currentPersona}
                 onPersonaChange={setCurrentPersona}
               />
-            </div>
-            <button
-              onClick={load}
-              title={
-                databaseStatus === "connected"
-                  ? "MongoDB connected"
-                  : "MongoDB disconnected — retry now"
-              }
-              className="grid h-8 w-8 place-items-center rounded-lg border border-emerald-950/10 bg-white"
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, ease: 'easeOut', delay: 0.18 }}
             >
-              <span
-                className={`h-2.5 w-2.5 rounded-full ${databaseStatus === "connected" ? "bg-emerald-500" : "bg-rose-500"}`}
-              />
-            </button>
+              <button
+                onClick={load}
+                title={
+                  databaseStatus === "connected"
+                    ? "MongoDB connected"
+                    : "MongoDB disconnected — retry now"
+                }
+                className="grid h-9 w-9 place-items-center rounded-xl border border-emerald-950/10 bg-white shadow-[1px_1px_0_rgba(0,0,0,0.08)] active:shadow-[0_0_0_rgba(0,0,0,0)]"
+              >
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${databaseStatus === "connected" ? "bg-emerald-500" : "bg-rose-500"}`}
+                />
+              </button>
+            </motion.div>
           </div>
         </header>
         <div
