@@ -35,7 +35,7 @@ export default function ShareButton() {
           url: shareUrl
         });
       } catch (err) {
-        console.log('Share failed:', err);
+        // Share failed silently
       }
     } else {
       // Fallback: copy to clipboard

@@ -36,7 +36,6 @@ export default function QRScanner({ onClose, onScan }: QRScannerProps) {
       setLoading(true);
       setError(null);
       setDetectedCode(null);
-      console.log('Starting QR scanner...');
       
       // Clean up existing scanner if any
       if (scannerRef.current) {
@@ -44,9 +43,8 @@ export default function QRScanner({ onClose, onScan }: QRScannerProps) {
           await scannerRef.current.stop();
           await scannerRef.current.clear();
           scannerRef.current = null;
-          console.log('Cleaned up existing scanner');
         } catch (e) {
-          console.log('Stop error (normal):', e);
+          // Stop error is normal
         }
       }
 
@@ -54,13 +52,11 @@ export default function QRScanner({ onClose, onScan }: QRScannerProps) {
       const container = document.getElementById(readerId.current);
       if (container) {
         container.innerHTML = '';
-        console.log('Cleared container');
       }
 
       // Remove any video elements with html5-qrcode class
       const existingVideos = document.querySelectorAll('video[id^="qr-reader"]');
       existingVideos.forEach(video => video.remove());
-      console.log('Removed existing videos:', existingVideos.length);
 
       const html5QrCode = new Html5Qrcode(readerId.current);
       scannerRef.current = html5QrCode;

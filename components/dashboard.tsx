@@ -448,7 +448,6 @@ export default function Dashboard() {
               <button
                 onClick={() => {
                   playClickSound();
-                  console.log('QR Scanner button clicked');
                   setShowQRScanner(true);
                 }}
                 className="grid h-9 w-9 place-items-center rounded-xl bg-forest text-white hover:bg-emerald-700 transition-colors shadow-[1px_1px_0_rgba(0,0,0,0.08)] active:shadow-[0_0_0_rgba(0,0,0,0)]"
