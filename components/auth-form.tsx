@@ -2,10 +2,11 @@
 
 import { Leaf, LockKeyhole, Phone, UserRound } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithPopup, googleProvider, auth } from "@/lib/firebase";
 import { setAuth } from "@/lib/auth";
+import { AudioCtx } from "@/lib/audio";
 
 export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const router = useRouter();
@@ -16,6 +17,19 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const isSignup = mode === "signup";
+
+  // Preload audio on mount
+  useEffect(() => {
+    AudioCtx.preload('ui_click_3d', 'ui_click_deep');
+  }, []);
+
+  const playClickSound = () => {
+    try {
+      AudioCtx.play("ui_click_3d");
+    } catch {
+      /* audio not ready */
+    }
+  };
 
   const countryCodes = [
     { code: "+91", name: "India", length: 10 },
@@ -67,6 +81,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
   const handlePhoneAuth = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    playClickSound();
     setError("");
     
     const selectedCountry = countryCodes.find(c => c.code === countryCode);
@@ -148,7 +163,10 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
           
           <div className="mt-7">
             <button
-              onClick={handleGoogleSignIn}
+              onClick={() => {
+                playClickSound();
+                handleGoogleSignIn();
+              }}
               disabled={loading}
               className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-3 font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
             >

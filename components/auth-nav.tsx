@@ -5,10 +5,24 @@ import Link from "next/link";
 import { getAuth, clearAuth, isAuthenticated } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { AudioCtx } from "@/lib/audio";
 
 export default function AuthNav() {
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
+
+  // Preload audio on mount
+  useEffect(() => {
+    AudioCtx.preload('ui_click_3d', 'ui_click_deep');
+  }, []);
+
+  const playClickSound = () => {
+    try {
+      AudioCtx.play("ui_click_3d");
+    } catch {
+      /* audio not ready */
+    }
+  };
 
   // Check authentication status and auto-logout if expired
   useEffect(() => {
@@ -35,6 +49,7 @@ export default function AuthNav() {
   }, []);
 
   const handleLogout = () => {
+    playClickSound();
     clearAuth();
     setUser(null);
     router.push('/');
@@ -85,6 +100,14 @@ export function MobileAuthNav({ closeMenu }: { closeMenu: () => void }) {
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
+  const playClickSound = () => {
+    try {
+      AudioCtx.play("ui_click_3d");
+    } catch {
+      /* audio not ready */
+    }
+  };
+
   useEffect(() => {
     const checkAuth = () => {
       const auth = getAuth();
@@ -108,6 +131,7 @@ export function MobileAuthNav({ closeMenu }: { closeMenu: () => void }) {
   }, []);
 
   const handleLogout = () => {
+    playClickSound();
     clearAuth();
     setUser(null);
     router.push('/');
@@ -133,7 +157,7 @@ export function MobileAuthNav({ closeMenu }: { closeMenu: () => void }) {
           </div>
           <span className="text-sm font-semibold text-forest">{getUserDisplayName()}</span>
         </div>
-        <Link onClick={closeMenu} href="/dashboard" className="rounded-xl bg-forest py-3 text-center text-sm font-semibold text-white">Dashboard</Link>
+        <Link onClick={() => { playClickSound(); closeMenu(); }} href="/dashboard" className="rounded-xl bg-forest py-3 text-center text-sm font-semibold text-white">Dashboard</Link>
         <button onClick={() => { handleLogout(); closeMenu(); }} className="rounded-xl border border-rose-200 bg-rose-50 py-3 text-center text-sm font-semibold text-rose-700">Logout</button>
       </div>
     );
@@ -141,8 +165,8 @@ export function MobileAuthNav({ closeMenu }: { closeMenu: () => void }) {
 
   return (
     <div className="mt-2 grid grid-cols-2 gap-2 sm:hidden">
-      <Link onClick={closeMenu} href="/auth/login" className="rounded-xl border border-forest py-3 text-center text-sm font-semibold text-forest">Log in</Link>
-      <Link onClick={closeMenu} href="/auth/signup" className="rounded-xl bg-forest py-3 text-center text-sm font-semibold text-white">Sign up</Link>
+      <Link onClick={() => { playClickSound(); closeMenu(); }} href="/auth/login" className="rounded-xl border border-forest py-3 text-center text-sm font-semibold text-forest">Log in</Link>
+      <Link onClick={() => { playClickSound(); closeMenu(); }} href="/auth/signup" className="rounded-xl bg-forest py-3 text-center text-sm font-semibold text-white">Sign up</Link>
     </div>
   );
 }

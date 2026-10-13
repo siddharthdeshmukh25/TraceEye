@@ -37,6 +37,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import html2canvas from "html2canvas";
 import { StatusBadge } from "./status-badge";
 import { getAuth, clearAuth, getUserId, isAuthenticated } from "@/lib/auth";
+import { AudioCtx } from "@/lib/audio";
 import SolarTelemetryDashboard from "./solar-telemetry-dashboard";
 import SpoilageRiskMonitor from "./spoilage-risk-monitor";
 import PersonaToggle, { getPersonaWidgets, type Persona } from "./persona-toggle";
@@ -111,6 +112,14 @@ function formatDate(value: string) {
   });
 }
 
+function playClickSound() {
+  try {
+    AudioCtx.play("ui_click_3d");
+  } catch {
+    /* audio not ready */
+  }
+}
+
 function FeatureGuide({ text }: { text: string }) {
   const [open, setOpen] = useState(false);
   const guideRef = useRef<HTMLSpanElement>(null);
@@ -127,7 +136,10 @@ function FeatureGuide({ text }: { text: string }) {
     <span ref={guideRef} className="relative z-40 mt-0.5 inline-flex shrink-0">
       <motion.button
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          playClickSound();
+          setOpen((value) => !value);
+        }}
         aria-label="How to use this feature"
         aria-expanded={open}
         className="grid h-6 w-6 place-items-center rounded-full border border-emerald-800/60 bg-white text-forest"
@@ -248,13 +260,16 @@ export default function Dashboard() {
       router.replace("/");
       return;
     }
-    
+
     const { user } = getAuth();
     if (user) setSession(user);
-    
+
+    // Preload audio for click sounds
+    AudioCtx.preload('ui_click_3d', 'ui_click_deep');
+
     load();
     // Auto polling disabled - only manual refresh
-    
+
     // Check token expiration periodically
     const tokenCheck = setInterval(() => {
       if (!isAuthenticated()) {
@@ -262,7 +277,7 @@ export default function Dashboard() {
         router.replace("/");
       }
     }, 120000); // Check every 2 minutes
-    
+
     return () => {
       window.clearInterval(tokenCheck);
     };
@@ -279,6 +294,11 @@ export default function Dashboard() {
     [batches, query, status],
   );
   const signOut = () => {
+    try {
+      AudioCtx.play("ui_click_3d");
+    } catch {
+      /* audio not ready */
+    }
     // Check if user signed in with Google
     const { user } = getAuth();
     if (user?.auth_provider === "google") {
@@ -291,6 +311,11 @@ export default function Dashboard() {
     router.replace("/");
   };
   const go = (next: string) => {
+    try {
+      AudioCtx.play("ui_click_3d");
+    } catch {
+      /* audio not ready */
+    }
     setTab(next);
     setMobileNavOpen(false);
     document
@@ -328,7 +353,10 @@ export default function Dashboard() {
     <main className="traceeye-dashboard min-h-screen bg-canvas text-ink">
       <aside className="fixed inset-y-0 hidden w-64 border-r border-white/10 bg-ink px-5 py-6 text-white lg:block">
         <button
-          onClick={() => go("overview")}
+          onClick={() => {
+            playClickSound();
+            go("overview");
+          }}
           className="flex items-center gap-2 text-left"
         >
           <span className="grid h-9 w-9 place-items-center rounded-full bg-lime text-ink">
@@ -355,7 +383,10 @@ export default function Dashboard() {
           ].map(([key, label, Icon]) => (
             <button
               key={key as string}
-              onClick={() => go(key as string)}
+              onClick={() => {
+                playClickSound();
+                go(key as string);
+              }}
               className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left ${tab === key ? "bg-white/10 text-white" : "text-emerald-100/70"}`}
             >
               <Icon size={14} />
@@ -367,7 +398,10 @@ export default function Dashboard() {
           <p className="text-xs text-emerald-100/60">Signed in as</p>
           <p className="mt-1 truncate text-sm font-bold">{memberName}</p>
           <button
-            onClick={signOut}
+            onClick={() => {
+              playClickSound();
+              signOut();
+            }}
             className="mt-4 flex items-center gap-2 text-xs font-bold text-lime"
           >
             <LogOut size={14} /> Log out
@@ -380,7 +414,10 @@ export default function Dashboard() {
             <div className="flex items-center gap-3 lg:hidden">
               <button
                 type="button"
-                onClick={() => setMobileNavOpen(true)}
+                onClick={() => {
+                  playClickSound();
+                  setMobileNavOpen(true);
+                }}
                 aria-label="Open dashboard navigation"
                 className="grid h-9 w-9 place-items-center rounded-lg border border-emerald-950/10 bg-white text-forest"
               >
@@ -410,6 +447,7 @@ export default function Dashboard() {
             >
               <button
                 onClick={() => {
+                  playClickSound();
                   console.log('QR Scanner button clicked');
                   setShowQRScanner(true);
                 }}
@@ -436,7 +474,10 @@ export default function Dashboard() {
               transition={{ duration: 0.4, ease: 'easeOut', delay: 0.18 }}
             >
               <button
-                onClick={load}
+                onClick={() => {
+                  playClickSound();
+                  load();
+                }}
                 title={
                   databaseStatus === "connected"
                     ? "MongoDB connected"
@@ -480,14 +521,20 @@ export default function Dashboard() {
                     whileHover={{ scale: 1.04 }}
                     whileTap={{ scale: 0.97 }}
                     transition={{ type: 'spring', stiffness: 360, damping: 20 }}
-                    onClick={() => setShowBatchForm(true)}
+                    onClick={() => {
+                      playClickSound();
+                      setShowBatchForm(true);
+                    }}
                     className="flex items-center gap-2 rounded-xl bg-forest px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors shadow-[2px_2px_0_rgba(0,0,0,0.06)] active:shadow-[0_0_0_rgba(0,0,0,0)]"
                   >
                     <PackagePlus size={16} />
                     Register batch
                   </motion.button>
                   <button
-                    onClick={() => go("batches")}
+                    onClick={() => {
+                      playClickSound();
+                      go("batches");
+                    }}
                     className="flex items-center gap-1 text-sm font-bold text-forest"
                   >
                     Open registry <ChevronRight size={17} />
@@ -549,7 +596,10 @@ export default function Dashboard() {
                       whileHover={{ scale: 1.04 }}
                       whileTap={{ scale: 0.97 }}
                       transition={{ type: 'spring', stiffness: 360, damping: 20 }}
-                      onClick={() => go("batches")}
+                      onClick={() => {
+                        playClickSound();
+                        go("batches");
+                      }}
                       className="text-sm font-bold text-forest shadow-[2px_2px_0_rgba(0,0,0,0.06)] active:shadow-[0_0_0_rgba(0,0,0,0)]"
                     >
                       View all
@@ -649,7 +699,10 @@ export default function Dashboard() {
             <motion.button
               type="button"
               aria-label="Close dashboard navigation"
-              onClick={() => setMobileNavOpen(false)}
+              onClick={() => {
+                playClickSound();
+                setMobileNavOpen(false);
+              }}
               className="fixed inset-0 z-50 bg-ink/45 lg:hidden"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -671,7 +724,10 @@ export default function Dashboard() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setMobileNavOpen(false)}
+                  onClick={() => {
+                    playClickSound();
+                    setMobileNavOpen(false);
+                  }}
                   aria-label="Close dashboard navigation"
                   className="grid h-8 w-8 place-items-center rounded-lg bg-white/10"
                 >
@@ -689,7 +745,10 @@ export default function Dashboard() {
                 ].map(([key, label, Icon]) => (
                   <button
                     key={key as string}
-                    onClick={() => go(key as string)}
+                    onClick={() => {
+                      playClickSound();
+                      go(key as string);
+                    }}
                     className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left ${tab === key ? "bg-white/10 text-white" : "text-emerald-100/70"}`}
                   >
                     <Icon size={14} />
@@ -698,7 +757,10 @@ export default function Dashboard() {
                 ))}
               </div>
               <button
-                onClick={signOut}
+                onClick={() => {
+                  playClickSound();
+                  signOut();
+                }}
                 className="mt-6 flex items-center gap-2 text-xs font-bold text-lime"
               >
                 <LogOut size={14} /> Log out
@@ -757,7 +819,10 @@ function BatchRow({
       <div className="flex items-center gap-2">
         <StatusBadge status={batch.current_status} />
         <button
-          onClick={() => onReading(batch)}
+          onClick={() => {
+            playClickSound();
+            onReading(batch);
+          }}
           title="Add safety reading"
           className="grid h-9 w-9 place-items-center rounded-lg bg-mint text-forest"
         >
@@ -859,7 +924,10 @@ function BatchRegistry({
                   <Lock size={15} /> Secure QR
                 </a>
                 <button
-                  onClick={() => onReading(batch)}
+                  onClick={() => {
+                    playClickSound();
+                    onReading(batch);
+                  }}
                   className="flex items-center gap-1 rounded-lg bg-ink px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-colors"
                 >
                   <Thermometer size={15} /> Add reading
@@ -1098,7 +1166,10 @@ function PassportCard({ batch }: { batch: Batch }) {
       </article>
       <button
         type="button"
-        onClick={handleDownload}
+        onClick={() => {
+          playClickSound();
+          handleDownload();
+        }}
         disabled={downloading}
         className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-950/10 bg-white px-4 py-3 text-sm font-bold text-forest shadow-sm transition hover:border-forest/25 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
@@ -1324,7 +1395,10 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
       
       <div className="mt-6">
         <button
-          onClick={() => setShowUploadForm(true)}
+          onClick={() => {
+            playClickSound();
+            setShowUploadForm(true);
+          }}
           className="group relative flex items-center gap-2 rounded-xl bg-gradient-to-r from-forest to-emerald-700 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-900/20 transition-all hover:shadow-lg hover:shadow-emerald-900/30"
         >
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-white/20 transition-all group-hover:bg-white/30">
@@ -1391,14 +1465,20 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
 
                   {verification.verification_status === "pending" ? (
                     <button
-                      onClick={() => setSelectedVerification(verification)}
+                      onClick={() => {
+                        playClickSound();
+                        setSelectedVerification(verification);
+                      }}
                       className="w-full rounded-lg bg-forest px-3 py-2 text-[10px] font-bold text-white transition-all hover:bg-emerald-700"
                     >
                       Review Seal
                     </button>
                   ) : (
                     <button
-                      onClick={() => setSelectedVerification(verification)}
+                      onClick={() => {
+                        playClickSound();
+                        setSelectedVerification(verification);
+                      }}
                       className="w-full rounded-lg bg-slate-100 px-3 py-2 text-[10px] font-bold text-slate-700 transition-all hover:bg-slate-200"
                     >
                       Edit Status
@@ -1462,7 +1542,10 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
                     />
                     <button
                       type="button"
-                      onClick={() => setPreviewImage(null)}
+                      onClick={() => {
+                        playClickSound();
+                        setPreviewImage(null);
+                      }}
                       className="absolute -right-2 -top-2 grid h-8 w-8 place-items-center rounded-full bg-rose-500 text-white shadow-lg"
                     >
                       <X size={16} />
@@ -1506,6 +1589,7 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
               <button
                 type="button"
                 onClick={() => {
+                  playClickSound();
                   setShowUploadForm(false);
                   setPreviewImage(null);
                   setSelectedBatch("");
@@ -1553,7 +1637,10 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
             
             <div className="grid gap-2">
               <button
-                onClick={() => handleVerify(selectedVerification.id, "verified_intact", "Seal appears intact and properly sealed")}
+                onClick={() => {
+                  playClickSound();
+                  handleVerify(selectedVerification.id, "verified_intact", "Seal appears intact and properly sealed");
+                }}
                 className="flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-xs font-bold text-white"
               >
                 <CheckCircle2 size={16} />
@@ -1561,7 +1648,10 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
               </button>
               
               <button
-                onClick={() => handleVerify(selectedVerification.id, "verified_tampered", "Seal appears broken or tampered")}
+                onClick={() => {
+                  playClickSound();
+                  handleVerify(selectedVerification.id, "verified_tampered", "Seal appears broken or tampered");
+                }}
                 className="flex items-center justify-center gap-2 rounded-lg bg-rose-600 px-4 py-3 text-xs font-bold text-white"
               >
                 <AlertTriangle size={16} />
@@ -1569,7 +1659,10 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
               </button>
               
               <button
-                onClick={() => handleVerify(selectedVerification.id, "flagged_review", "Requires further investigation")}
+                onClick={() => {
+                  playClickSound();
+                  handleVerify(selectedVerification.id, "flagged_review", "Requires further investigation");
+                }}
                 className="flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-3 text-xs font-bold text-white"
               >
                 <CircleAlert size={16} />
@@ -1711,7 +1804,10 @@ function BatchForm({
         <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
           <button
             type="button"
-            onClick={close}
+            onClick={() => {
+              playClickSound();
+              close();
+            }}
             className="rounded-xl px-4 py-3 text-sm font-bold"
           >
             Cancel
@@ -1817,7 +1913,10 @@ function ReadingForm({
         <div className="sm:col-span-2 flex justify-end gap-2">
           <button
             type="button"
-            onClick={close}
+            onClick={() => {
+              playClickSound();
+              close();
+            }}
             className="rounded-xl px-4 py-3 text-sm font-bold"
           >
             Cancel
@@ -1863,7 +1962,10 @@ function Modal({
         <div className="mb-5 flex items-start justify-between gap-4">
           <h2 className="text-xl font-bold">{title}</h2>
           <button
-            onClick={close}
+            onClick={() => {
+              playClickSound();
+              close();
+            }}
             className="grid h-9 w-9 place-items-center rounded-lg bg-slate-100"
           >
             <X size={18} />
