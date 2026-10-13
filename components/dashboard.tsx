@@ -44,6 +44,9 @@ import PersonaToggle, { getPersonaWidgets, type Persona } from "./persona-toggle
 import PersonaDashboard from "./persona-dashboard";
 import VegetablePlotDashboard from "./vegetable-plot-dashboard";
 import QRScanner from "./qr-scanner";
+import VoiceControl from "./voice-control";
+import AnimatedCard from "./animated-card";
+import DocumentScanner from "./document-scanner";
 
 type Summary = {
   total_batches: number;
@@ -120,6 +123,19 @@ function playClickSound() {
   }
 }
 
+// Debounced version for performance
+let debounceTimer: NodeJS.Timeout;
+function playClickSoundDebounced() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    try {
+      AudioCtx.play("ui_click_3d");
+    } catch {
+      /* audio not ready */
+    }
+  }, 50);
+}
+
 function FeatureGuide({ text }: { text: string }) {
   const [open, setOpen] = useState(false);
   const guideRef = useRef<HTMLSpanElement>(null);
@@ -137,7 +153,7 @@ function FeatureGuide({ text }: { text: string }) {
       <motion.button
         type="button"
         onClick={() => {
-          playClickSound();
+          // playClickSound();
           setOpen((value) => !value);
         }}
         aria-label="How to use this feature"
@@ -196,6 +212,7 @@ export default function Dashboard() {
   const [saving, setSaving] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showDocumentScanner, setShowDocumentScanner] = useState(false);
   const load = async () => {
     setLoading(true);
     try {
@@ -264,8 +281,8 @@ export default function Dashboard() {
     const { user } = getAuth();
     if (user) setSession(user);
 
-    // Preload audio for click sounds
-    AudioCtx.preload('ui_click_3d', 'ui_click_deep');
+    // Preload audio for click sounds (lazy load)
+    // AudioCtx.preload('ui_click_3d', 'ui_click_deep');
 
     load();
     // Auto polling disabled - only manual refresh
@@ -354,7 +371,6 @@ export default function Dashboard() {
       <aside className="fixed inset-y-0 hidden w-64 border-r border-white/10 bg-ink px-5 py-6 text-white lg:block">
         <button
           onClick={() => {
-            playClickSound();
             go("overview");
           }}
           className="flex items-center gap-2 text-left"
@@ -384,7 +400,6 @@ export default function Dashboard() {
             <button
               key={key as string}
               onClick={() => {
-                playClickSound();
                 go(key as string);
               }}
               className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left ${tab === key ? "bg-white/10 text-white" : "text-emerald-100/70"}`}
@@ -399,7 +414,7 @@ export default function Dashboard() {
           <p className="mt-1 truncate text-sm font-bold">{memberName}</p>
           <button
             onClick={() => {
-              playClickSound();
+              // playClickSound();
               signOut();
             }}
             className="mt-4 flex items-center gap-2 text-xs font-bold text-lime"
@@ -415,7 +430,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => {
-                  playClickSound();
+                  // playClickSound();
                   setMobileNavOpen(true);
                 }}
                 aria-label="Open dashboard navigation"
@@ -429,7 +444,7 @@ export default function Dashboard() {
               <span className="brand-wordmark text-[22px]">TraceEye</span>
             </div>
             <div className="hidden lg:flex items-center gap-4">
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
                 <p className="text-xs font-bold tracking-[.14em] text-forest">
                   TRACEABILITY OPERATIONS
                 </p>
@@ -443,11 +458,11 @@ export default function Dashboard() {
             <motion.div
               initial={{ opacity: 0, x: 6 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
+              transition={{ duration: 0.25, ease: 'easeOut', delay: 0.05 }}
             >
               <button
                 onClick={() => {
-                  playClickSound();
+                  // playClickSound();
                   setShowQRScanner(true);
                 }}
                 className="grid h-9 w-9 place-items-center rounded-xl bg-forest text-white hover:bg-emerald-700 transition-colors shadow-[1px_1px_0_rgba(0,0,0,0.08)] active:shadow-[0_0_0_rgba(0,0,0,0)]"
@@ -459,7 +474,23 @@ export default function Dashboard() {
             <motion.div
               initial={{ opacity: 0, x: 6 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, ease: 'easeOut', delay: 0.14 }}
+              transition={{ duration: 0.25, ease: 'easeOut', delay: 0.052 }}
+            >
+              <button
+                onClick={() => {
+                  // playClickSound();
+                  setShowDocumentScanner(true);
+                }}
+                className="grid h-9 w-9 place-items-center rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-[1px_1px_0_rgba(0,0,0,0.08)] active:shadow-[0-0-0_rgba(0,0,0,0)]"
+                title="Scan Document"
+              >
+                <Camera size={18} />
+              </button>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.25, ease: 'easeOut', delay: 0.054 }}
               className="hidden lg:block"
             >
               <PersonaToggle
@@ -470,11 +501,11 @@ export default function Dashboard() {
             <motion.div
               initial={{ opacity: 0, x: 6 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, ease: 'easeOut', delay: 0.18 }}
+              transition={{ duration: 0.25, ease: 'easeOut', delay: 0.058 }}
             >
               <button
                 onClick={() => {
-                  playClickSound();
+                  // playClickSound();
                   load();
                 }}
                 title={
@@ -482,12 +513,40 @@ export default function Dashboard() {
                     ? "MongoDB connected"
                     : "MongoDB disconnected — retry now"
                 }
-                className="grid h-9 w-9 place-items-center rounded-xl border border-emerald-950/10 bg-white shadow-[1px_1px_0_rgba(0,0,0,0.08)] active:shadow-[0_0_0_rgba(0,0,0,0)]"
+                className="grid h-9 w-9 place-items-center rounded-xl border border-emerald-950/10 bg-white shadow-[1px_1px_0_rgba(0,0,0,0.08)] active:shadow-[0-0-0_rgba(0,0,0,0)]"
               >
                 <span
                   className={`h-2.5 w-2.5 rounded-full ${databaseStatus === "connected" ? "bg-emerald-500" : "bg-rose-500"}`}
                 />
               </button>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.25, ease: 'easeOut', delay: 0.22 }}
+            >
+              <VoiceControl
+                onCommand={(command, target, action) => {
+                  if (command === 'navigate' && target) {
+                    go(target);
+                  } else if (command === 'action') {
+                    if (action === 'register_batch') {
+                      setShowBatchForm(true);
+                    } else if (action === 'scan_qr') {
+                      setShowQRScanner(true);
+                    } else if (action === 'scan_document' || action === 'scan_doc') {
+                      setShowDocumentScanner(true);
+                    } else if (action === 'refresh') {
+                      load();
+                    } else if (action === 'logout') {
+                      signOut();
+                    } else if (action === 'search' && target) {
+                      setQuery(target);
+                      go('batches');
+                    }
+                  }
+                }}
+              />
             </motion.div>
           </div>
         </header>
@@ -507,7 +566,7 @@ export default function Dashboard() {
                   <p className="text-xs font-bold tracking-[.15em] text-forest">
                     OVERVIEW
                   </p>
-                  <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: 'easeOut' }} className="mt-2 text-2xl font-bold tracking-tight sm:text-4xl">
+                  <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.255, ease: 'easeOut' }} className="mt-2 text-2xl font-bold tracking-tight sm:text-4xl">
                     Food journey, in full view.
                   </motion.h1>
                   <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
@@ -521,7 +580,7 @@ export default function Dashboard() {
                     whileTap={{ scale: 0.97 }}
                     transition={{ type: 'spring', stiffness: 360, damping: 20 }}
                     onClick={() => {
-                      playClickSound();
+                      // playClickSound();
                       setShowBatchForm(true);
                     }}
                     className="flex items-center gap-2 rounded-xl bg-forest px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors shadow-[2px_2px_0_rgba(0,0,0,0.06)] active:shadow-[0_0_0_rgba(0,0,0,0)]"
@@ -531,7 +590,7 @@ export default function Dashboard() {
                   </motion.button>
                   <button
                     onClick={() => {
-                      playClickSound();
+                      // playClickSound();
                       go("batches");
                     }}
                     className="flex items-center gap-1 text-sm font-bold text-forest"
@@ -542,7 +601,7 @@ export default function Dashboard() {
               </div>
               <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {cards.map(({ label, value, icon: Icon, color }) => (
-                  <article
+                  <AnimatedCard
                     key={label}
                     className="rounded-2xl border border-emerald-950/5 bg-white p-5"
                   >
@@ -555,7 +614,7 @@ export default function Dashboard() {
                       {loading ? "â€”" : value}
                     </p>
                     <p className="mt-1 text-sm text-slate-500">{label}</p>
-                  </article>
+                  </AnimatedCard>
                 ))}
               </div>
 
@@ -582,7 +641,7 @@ export default function Dashboard() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-1.5">
                       <div>
-                        <motion.h2 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }} className="text-lg font-bold">
+                        <motion.h2 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: 'easeOut' }} className="text-lg font-bold">
                           Latest batch activity
                         </motion.h2>
                         <p className="mt-1 text-sm text-slate-500">
@@ -596,7 +655,7 @@ export default function Dashboard() {
                       whileTap={{ scale: 0.97 }}
                       transition={{ type: 'spring', stiffness: 360, damping: 20 }}
                       onClick={() => {
-                        playClickSound();
+                        // playClickSound();
                         go("batches");
                       }}
                       className="text-sm font-bold text-forest shadow-[2px_2px_0_rgba(0,0,0,0.06)] active:shadow-[0_0_0_rgba(0,0,0,0)]"
@@ -625,7 +684,7 @@ export default function Dashboard() {
                         <p className="text-xs font-bold tracking-[.14em] text-forest">
                           SAFETY ENGINE
                         </p>
-                        <motion.h2 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut', delay: 0.08 }} className="mt-2 text-xl font-bold">
+                        <motion.h2 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: 'easeOut', delay: 0.08 }} className="mt-2 text-xl font-bold">
                           From signal to response.
                         </motion.h2>
                       </div>
@@ -634,14 +693,14 @@ export default function Dashboard() {
                     <Thermometer className="text-forest" />
                   </div>
                   <div className="mt-7 space-y-4 text-sm">
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.36, ease: 'easeOut', delay: 0.12 }} className="rounded-xl border border-emerald-950/10 bg-white p-4 shadow-[2px_2px_0_rgba(0,0,0,0.04)]">
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.36, ease: 'easeOut', delay: 0.052 }} className="rounded-xl border border-emerald-950/10 bg-white p-4 shadow-[2px_2px_0_rgba(0,0,0,0.04)]">
                       <p className="font-bold">1. Capture evidence</p>
                       <p className="mt-1 text-slate-600">
                         Temperature, humidity and tamper marker checks are
                         attached to a batch.
                       </p>
                     </motion.div>
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.36, ease: 'easeOut', delay: 0.16 }} className="rounded-xl border border-emerald-950/10 bg-white p-4 shadow-[2px_2px_0_rgba(0,0,0,0.04)]">
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.36, ease: 'easeOut', delay: 0.056 }} className="rounded-xl border border-emerald-950/10 bg-white p-4 shadow-[2px_2px_0_rgba(0,0,0,0.04)]">
                       <p className="font-bold">2. Evaluate policy</p>
                       <p className="mt-1 text-slate-600">
                         TraceEye compares the latest readings against its
@@ -699,7 +758,7 @@ export default function Dashboard() {
               type="button"
               aria-label="Close dashboard navigation"
               onClick={() => {
-                playClickSound();
+                // playClickSound();
                 setMobileNavOpen(false);
               }}
               className="fixed inset-0 z-50 bg-ink/45 lg:hidden"
@@ -724,7 +783,7 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() => {
-                    playClickSound();
+                    // playClickSound();
                     setMobileNavOpen(false);
                   }}
                   aria-label="Close dashboard navigation"
@@ -745,7 +804,7 @@ export default function Dashboard() {
                   <button
                     key={key as string}
                     onClick={() => {
-                      playClickSound();
+                      // playClickSound();
                       go(key as string);
                     }}
                     className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left ${tab === key ? "bg-white/10 text-white" : "text-emerald-100/70"}`}
@@ -757,7 +816,7 @@ export default function Dashboard() {
               </div>
               <button
                 onClick={() => {
-                  playClickSound();
+                  // playClickSound();
                   signOut();
                 }}
                 className="mt-6 flex items-center gap-2 text-xs font-bold text-lime"
@@ -796,6 +855,15 @@ export default function Dashboard() {
           }}
         />
       )}
+
+      {showDocumentScanner && (
+        <DocumentScanner
+          onClose={() => setShowDocumentScanner(false)}
+          onScanComplete={(imageData) => {
+            console.log('Document scanned:', imageData);
+          }}
+        />
+      )}
     </main>
   );
 }
@@ -819,7 +887,7 @@ function BatchRow({
         <StatusBadge status={batch.current_status} />
         <button
           onClick={() => {
-            playClickSound();
+            // playClickSound();
             onReading(batch);
           }}
           title="Add safety reading"
@@ -924,7 +992,7 @@ function BatchRegistry({
                 </a>
                 <button
                   onClick={() => {
-                    playClickSound();
+                    // playClickSound();
                     onReading(batch);
                   }}
                   className="flex items-center gap-1 rounded-lg bg-ink px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-colors"
@@ -1166,7 +1234,7 @@ function PassportCard({ batch }: { batch: Batch }) {
       <button
         type="button"
         onClick={() => {
-          playClickSound();
+          // playClickSound();
           handleDownload();
         }}
         disabled={downloading}
@@ -1395,7 +1463,7 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
       <div className="mt-6">
         <button
           onClick={() => {
-            playClickSound();
+            // playClickSound();
             setShowUploadForm(true);
           }}
           className="group relative flex items-center gap-2 rounded-xl bg-gradient-to-r from-forest to-emerald-700 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-900/20 transition-all hover:shadow-lg hover:shadow-emerald-900/30"
@@ -1465,7 +1533,7 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
                   {verification.verification_status === "pending" ? (
                     <button
                       onClick={() => {
-                        playClickSound();
+                        // playClickSound();
                         setSelectedVerification(verification);
                       }}
                       className="w-full rounded-lg bg-forest px-3 py-2 text-[10px] font-bold text-white transition-all hover:bg-emerald-700"
@@ -1475,7 +1543,7 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
                   ) : (
                     <button
                       onClick={() => {
-                        playClickSound();
+                        // playClickSound();
                         setSelectedVerification(verification);
                       }}
                       className="w-full rounded-lg bg-slate-100 px-3 py-2 text-[10px] font-bold text-slate-700 transition-all hover:bg-slate-200"
@@ -1542,7 +1610,7 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
                     <button
                       type="button"
                       onClick={() => {
-                        playClickSound();
+                        // playClickSound();
                         setPreviewImage(null);
                       }}
                       className="absolute -right-2 -top-2 grid h-8 w-8 place-items-center rounded-full bg-rose-500 text-white shadow-lg"
@@ -1588,7 +1656,7 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
               <button
                 type="button"
                 onClick={() => {
-                  playClickSound();
+                  // playClickSound();
                   setShowUploadForm(false);
                   setPreviewImage(null);
                   setSelectedBatch("");
@@ -1637,7 +1705,7 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
             <div className="grid gap-2">
               <button
                 onClick={() => {
-                  playClickSound();
+                  // playClickSound();
                   handleVerify(selectedVerification.id, "verified_intact", "Seal appears intact and properly sealed");
                 }}
                 className="flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-xs font-bold text-white"
@@ -1648,7 +1716,7 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
               
               <button
                 onClick={() => {
-                  playClickSound();
+                  // playClickSound();
                   handleVerify(selectedVerification.id, "verified_tampered", "Seal appears broken or tampered");
                 }}
                 className="flex items-center justify-center gap-2 rounded-lg bg-rose-600 px-4 py-3 text-xs font-bold text-white"
@@ -1659,7 +1727,7 @@ function SealVerificationCenter({ visualVerifications, batches, refresh }: { vis
               
               <button
                 onClick={() => {
-                  playClickSound();
+                  // playClickSound();
                   handleVerify(selectedVerification.id, "flagged_review", "Requires further investigation");
                 }}
                 className="flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-3 text-xs font-bold text-white"
@@ -1804,7 +1872,7 @@ function BatchForm({
           <button
             type="button"
             onClick={() => {
-              playClickSound();
+              // playClickSound();
               close();
             }}
             className="rounded-xl px-4 py-3 text-sm font-bold"
@@ -1913,7 +1981,7 @@ function ReadingForm({
           <button
             type="button"
             onClick={() => {
-              playClickSound();
+              // playClickSound();
               close();
             }}
             className="rounded-xl px-4 py-3 text-sm font-bold"
@@ -1962,7 +2030,7 @@ function Modal({
           <h2 className="text-xl font-bold">{title}</h2>
           <button
             onClick={() => {
-              playClickSound();
+              // playClickSound();
               close();
             }}
             className="grid h-9 w-9 place-items-center rounded-lg bg-slate-100"

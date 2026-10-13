@@ -4,9 +4,11 @@ import { Leaf, LockKeyhole, Phone, UserRound } from "lucide-react";
 import Link from "next/link";
 import { FormEvent, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatePresence } from "framer-motion";
 import { signInWithPopup, googleProvider, auth } from "@/lib/firebase";
 import { setAuth } from "@/lib/auth";
 import { AudioCtx } from "@/lib/audio";
+import LoginTransition from "./login-transition";
 
 export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const router = useRouter();
@@ -16,6 +18,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showTransition, setShowTransition] = useState(false);
   const isSignup = mode === "signup";
 
   // Preload audio on mount
@@ -67,11 +70,12 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
       }
 
       const { token, user: userData } = await response.json();
-      
+
       // Store token and user data
       setAuth(token, userData);
-      
-      router.replace("/dashboard");
+
+      // Show transition before navigating
+      setShowTransition(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Google sign-in failed. Please try again.");
     } finally {
@@ -113,11 +117,12 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
       }
 
       const { token, user } = await result.json();
-      
+
       // Store token and user data
       setAuth(token, user);
-      
-      router.replace("/dashboard");
+
+      // Show transition before navigating
+      setShowTransition(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed. Please try again.");
     } finally {
@@ -276,6 +281,17 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
           </p>
         </div>
       </section>
+
+      {/* Login Transition Animation */}
+      <AnimatePresence>
+        {showTransition && (
+          <LoginTransition
+            onComplete={() => {
+              router.replace("/dashboard");
+            }}
+          />
+        )}
+      </AnimatePresence>
     </main>
   );
 }

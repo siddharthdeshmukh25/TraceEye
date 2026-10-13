@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Server, 
-  Database, 
-  ShieldCheck, 
-  AlertTriangle, 
+import {
+  Server,
+  Database,
+  ShieldCheck,
+  AlertTriangle,
   Activity,
   Clock,
   HardDrive,
@@ -14,7 +14,6 @@ import {
   XCircle,
   Wifi,
   Cpu,
-  Memory,
   Zap
 } from "lucide-react";
 
@@ -332,7 +331,7 @@ export default function SystemStatusPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="rounded-xl bg-slate-50 p-4">
                   <div className="flex items-center gap-2 text-slate-600 mb-1">
-                    <Memory size={16} />
+                    <Cpu size={16} />
                     <span className="text-xs font-medium">Platform</span>
                   </div>
                   <p className="text-sm font-bold text-slate-900">Node.js</p>
