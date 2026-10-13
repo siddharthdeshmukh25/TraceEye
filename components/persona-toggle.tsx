@@ -108,10 +108,10 @@ export default function PersonaToggle({ currentPersona, onPersonaChange }: Perso
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           transition={{ type: 'spring', stiffness: 420, damping: 18 }}
-          className="flex items-center gap-3 rounded-xl border-2 border-emerald-800/20 bg-gradient-to-br from-emerald-50 to-white px-5 py-3 text-sm font-bold text-forest hover:bg-emerald-50 transition-colors shadow-[3px_3px_0_rgba(13,43,32,0.08)] active:shadow-[0_0_0_rgba(13,43,32,0)] ring-[3px] ring-emerald-800/20"
+          className="flex items-center gap-2 rounded-xl border border-emerald-950/10 bg-white px-3 py-2 text-xs font-bold text-forest hover:bg-emerald-50 transition-colors shadow-[1px_1px_0_rgba(0,0,0,0.04)] active:shadow-[0_0_0_rgba(0,0,0,0)] ring-1 ring-emerald-950/10"
         >
-          <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-100 text-emerald-800 shadow-[2px_2px_0_rgba(13,43,32,0.08)]">
-            <selectedPersona.icon size={22} />
+          <div className="grid h-7 w-7 place-items-center rounded-md bg-emerald-100 text-emerald-700 shadow-[1px_1px_0_rgba(0,0,0,0.04)]">
+            <selectedPersona.icon size={15} />
           </div>
           <span className="text-forest tracking-tight">{selectedPersona.label}</span>
           <ToggleChevron isOpen={isOpen} />
@@ -133,7 +133,7 @@ export default function PersonaToggle({ currentPersona, onPersonaChange }: Perso
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -4, scale: 0.96 }}
               transition={{ duration: 0.22, ease: 'easeOut' }}
-              className="absolute right-0 top-full z-50 mt-3 w-72 rounded-xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/10 p-2"
+              className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/10 p-1.5"
             >
               {PERSONAS.map((persona) => (
                 <PersonaItemButton
@@ -185,31 +185,31 @@ const PersonaItemButton = forwardRef<HTMLButtonElement, {
           : 'hover:bg-slate-50 text-slate-700'
       }`}
     >
-      <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg shadow-[1px_1px_0_rgba(0,0,0,0.06)] ${
+      <div className={`grid h-7 w-7 shrink-0 place-items-center rounded-md shadow-[1px_1px_0_rgba(0,0,0,0.04)] ${
         currentPersona === personaId ? 'bg-emerald-200 text-emerald-700' : 'bg-slate-100 text-slate-500'
       }`}>
-        <personaIcon personaId={personaId} />
+        <personaIconSmall personaId={personaId} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-base">{personaLabel(personaId)}</p>
-        <p className="text-xs text-slate-500 mt-0.5">{personaDescription(personaId)}</p>
+        <p className="font-semibold text-sm">{personaLabel(personaId)}</p>
+        <p className="text-[10px] text-slate-500 mt-0.5">{personaDescription(personaId)}</p>
       </div>
     </motion.button>
   );
 });
 
-function personaIcon({ personaId }: { personaId: Persona }) {
+function personaIconSmall({ personaId }: { personaId: Persona }) {
   switch (personaId) {
     case 'farmer':
-      return <User size={20} />;
+      return <User size={15} />;
     case 'logistics':
-      return <Truck size={20} />;
+      return <Truck size={15} />;
     case 'regulator':
-      return <ShieldCheck size={20} />;
+      return <ShieldCheck size={15} />;
     case 'consumer':
-      return <ShoppingBag size={20} />;
+      return <ShoppingBag size={15} />;
     default:
-      return <User size={20} />;
+      return <User size={15} />;
   }
 }
 
