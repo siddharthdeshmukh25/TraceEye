@@ -448,22 +448,25 @@ export default function Dashboard() {
                   <p className="text-xs font-bold tracking-[.15em] text-forest">
                     OVERVIEW
                   </p>
-                  <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-4xl">
+                  <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: 'easeOut' }} className="mt-2 text-2xl font-bold tracking-tight sm:text-4xl">
                     Food journey, in full view.
-                  </h1>
+                  </motion.h1>
                   <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
                     Register product passports, monitor storage evidence, and
                     take only the recall action a batch needs.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: 'spring', stiffness: 360, damping: 20 }}
                     onClick={() => setShowBatchForm(true)}
-                    className="flex items-center gap-2 rounded-xl bg-forest px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors"
+                    className="flex items-center gap-2 rounded-xl bg-forest px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors shadow-[2px_2px_0_rgba(0,0,0,0.06)] active:shadow-[0_0_0_rgba(0,0,0,0)]"
                   >
                     <PackagePlus size={16} />
                     Register batch
-                  </button>
+                  </motion.button>
                   <button
                     onClick={() => go("batches")}
                     className="flex items-center gap-1 text-sm font-bold text-forest"
@@ -510,25 +513,28 @@ export default function Dashboard() {
               <PersonaDashboard persona={currentPersona} />
 
               <div className="mt-6 grid gap-5 xl:grid-cols-[1.35fr_.85fr]">
-                <section className="rounded-2xl border border-emerald-950/5 bg-white p-5 sm:p-6">
+                <section className="rounded-2xl border border-emerald-950/5 bg-white p-5 sm:p-6 shadow-[0_8px_0_-4px_rgba(0,0,0,0.05)]">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-1.5">
                       <div>
-                        <h2 className="text-lg font-bold">
+                        <motion.h2 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }} className="text-lg font-bold">
                           Latest batch activity
-                        </h2>
+                        </motion.h2>
                         <p className="mt-1 text-sm text-slate-500">
                           Every batch has a public, scannable food passport.
                         </p>
                       </div>
                       <FeatureGuide text="Each new batch becomes a searchable food passport. Open a passport to share its verified journey." />
                     </div>
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.97 }}
+                      transition={{ type: 'spring', stiffness: 360, damping: 20 }}
                       onClick={() => go("batches")}
-                      className="text-sm font-bold text-forest"
+                      className="text-sm font-bold text-forest shadow-[2px_2px_0_rgba(0,0,0,0.06)] active:shadow-[0_0_0_rgba(0,0,0,0)]"
                     >
                       View all
-                    </button>
+                    </motion.button>
                   </div>
                   <div className="mt-4 divide-y divide-emerald-950/5">
                     {(Array.isArray(batches) ? batches.slice(0, 5) : [])
@@ -544,37 +550,37 @@ export default function Dashboard() {
                     )}
                   </div>
                 </section>
-                <section className="rounded-2xl border border-emerald-700/35 bg-[#e8f0e3] p-6 text-forest">
+                <section className="rounded-2xl border border-emerald-700/35 bg-[#e8f0e3] p-6 text-forest shadow-[0_8px_0_-4px_rgba(0,0,0,0.05)]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-start gap-1.5">
                       <div>
                         <p className="text-xs font-bold tracking-[.14em] text-forest">
                           SAFETY ENGINE
                         </p>
-                        <h2 className="mt-2 text-xl font-bold">
+                        <motion.h2 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut', delay: 0.08 }} className="mt-2 text-xl font-bold">
                           From signal to response.
-                        </h2>
+                        </motion.h2>
                       </div>
                       <FeatureGuide text="Add a temperature, humidity and visual-marker reading to a batch. TraceEye immediately compares it against the storage policy." />
                     </div>
                     <Thermometer className="text-forest" />
                   </div>
                   <div className="mt-7 space-y-4 text-sm">
-                    <div className="rounded-xl border border-emerald-950/10 bg-white p-4">
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.36, ease: 'easeOut', delay: 0.12 }} className="rounded-xl border border-emerald-950/10 bg-white p-4 shadow-[2px_2px_0_rgba(0,0,0,0.04)]">
                       <p className="font-bold">1. Capture evidence</p>
                       <p className="mt-1 text-slate-600">
                         Temperature, humidity and tamper marker checks are
                         attached to a batch.
                       </p>
-                    </div>
-                    <div className="rounded-xl border border-emerald-950/10 bg-white p-4">
+                    </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.36, ease: 'easeOut', delay: 0.16 }} className="rounded-xl border border-emerald-950/10 bg-white p-4 shadow-[2px_2px_0_rgba(0,0,0,0.04)]">
                       <p className="font-bold">2. Evaluate policy</p>
                       <p className="mt-1 text-slate-600">
                         TraceEye compares the latest readings against its
                         approved storage range.
                       </p>
-                    </div>
-                    <div className="rounded-xl border border-[#c8dbad] bg-[#dfeccf] p-4 text-ink">
+                    </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.36, ease: 'easeOut', delay: 0.2 }} className="rounded-xl border border-[#c8dbad] bg-[#dfeccf] p-4 text-ink shadow-[2px_2px_0_rgba(0,0,0,0.04)]">
                       <p className="font-bold">
                         3. Smart recall only when needed
                       </p>
@@ -582,7 +588,7 @@ export default function Dashboard() {
                         Critical batches are isolated instead of recalling
                         unaffected food.
                       </p>
-                    </div>
+                    </motion.div>
                   </div>
                 </section>
               </div>
