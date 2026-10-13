@@ -8,6 +8,9 @@ import {
   Area,
   BarChart,
   Bar,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -39,8 +42,30 @@ const yieldData = [
   { plot: "Plot D", tomatoes: 80, potatoes: 90, onions: 85, carrots: 92 },
 ];
 
+const distributionData = [
+  { name: "Tomatoes", value: 27.2, color: "#ef4444" },
+  { name: "Potatoes", value: 18.9, color: "#f59e0b" },
+  { name: "Onions", value: 21.7, color: "#8b5cf6" },
+  { name: "Carrots", value: 15.4, color: "#f97316" },
+];
+
+const monthlyTrendData = [
+  { month: "Jan", total: 5400 },
+  { month: "Feb", total: 5650 },
+  { month: "Mar", total: 6200 },
+  { month: "Apr", total: 6800 },
+  { month: "May", total: 7400 },
+  { month: "Jun", total: 8000 },
+  { month: "Jul", total: 8300 },
+  { month: "Aug", total: 8150 },
+  { month: "Sep", total: 7700 },
+  { month: "Oct", total: 7200 },
+  { month: "Nov", total: 6600 },
+  { month: "Dec", total: 6000 },
+];
+
 export default function VegetablePlotDashboard() {
-  const [selectedView, setSelectedView] = useState<"production" | "yield">("production");
+  const [selectedView, setSelectedView] = useState<"production" | "yield" | "distribution" | "trend" | "efficiency">("production");
 
   return (
     <div className="rounded-2xl border border-emerald-950/5 bg-white p-5">
@@ -58,7 +83,7 @@ export default function VegetablePlotDashboard() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => setSelectedView("production")}
             className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
@@ -78,6 +103,36 @@ export default function VegetablePlotDashboard() {
             }`}
           >
             Yield %
+          </button>
+          <button
+            onClick={() => setSelectedView("distribution")}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+              selectedView === "distribution"
+                ? "bg-forest text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            Distribution
+          </button>
+          <button
+            onClick={() => setSelectedView("trend")}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+              selectedView === "trend"
+                ? "bg-forest text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            Trend
+          </button>
+          <button
+            onClick={() => setSelectedView("efficiency")}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+              selectedView === "efficiency"
+                ? "bg-forest text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            Efficiency
           </button>
         </div>
       </div>
@@ -202,7 +257,7 @@ export default function VegetablePlotDashboard() {
               />
             </AreaChart>
           </ResponsiveContainer>
-        ) : (
+        ) : selectedView === "yield" ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={yieldData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -221,6 +276,105 @@ export default function VegetablePlotDashboard() {
               <Bar dataKey="onions" fill="#8b5cf6" name="Onions %" />
               <Bar dataKey="carrots" fill="#f97316" name="Carrots %" />
             </BarChart>
+          </ResponsiveContainer>
+        ) : selectedView === "distribution" ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={distributionData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {distributionData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        ) : selectedView === "trend" ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={monthlyTrendData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
+              <YAxis stroke="#64748b" fontSize={12} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "white",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                }}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="total"
+                stroke="#10b981"
+                strokeWidth={3}
+                name="Total Production (kg)"
+                dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={yieldData}>
+              <defs>
+                <linearGradient id="colorEfficiency" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="plot" stroke="#64748b" fontSize={12} />
+              <YAxis stroke="#64748b" fontSize={12} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "white",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                }}
+              />
+              <Legend />
+              <Area
+                type="monotone"
+                dataKey="tomatoes"
+                stroke="#ef4444"
+                fillOpacity={0.6}
+                fill="url(#colorEfficiency)"
+                name="Tomatoes"
+              />
+              <Area
+                type="monotone"
+                dataKey="potatoes"
+                stroke="#f59e0b"
+                fillOpacity={0.6}
+                fill="url(#colorEfficiency)"
+                name="Potatoes"
+              />
+              <Area
+                type="monotone"
+                dataKey="onions"
+                stroke="#8b5cf6"
+                fillOpacity={0.6}
+                fill="url(#colorEfficiency)"
+                name="Onions"
+              />
+              <Area
+                type="monotone"
+                dataKey="carrots"
+                stroke="#f97316"
+                fillOpacity={0.6}
+                fill="url(#colorEfficiency)"
+                name="Carrots"
+              />
+            </AreaChart>
           </ResponsiveContainer>
         )}
       </div>
