@@ -9,4 +9,3 @@ pnpm-debug.log*
 traceeye-next*.log
 tsconfig.tsbuildinfo
 .vercel/
-README.md
