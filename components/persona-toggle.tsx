@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, forwardRef } from "react";
+import { useEffect, useState, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
 import { User, Truck, ShieldCheck, ShoppingBag, ChevronDown } from "lucide-react";
 import { AudioCtx } from "@/lib/audio";
 
@@ -107,10 +108,10 @@ export default function PersonaToggle({ currentPersona, onPersonaChange }: Perso
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           transition={{ type: 'spring', stiffness: 420, damping: 18 }}
-          className="flex items-center gap-3 rounded-xl border border-emerald-950/10 bg-white px-4 py-3 text-sm font-bold text-forest hover:bg-emerald-50 transition-colors shadow-[2px_2px_0_rgba(0,0,0,0.08)] active:shadow-[0_0_0_rgba(0,0,0,0)] ring-1 ring-emerald-950/10"
+          className="flex items-center gap-3 rounded-xl border-2 border-emerald-800/20 bg-gradient-to-br from-emerald-50 to-white px-5 py-3 text-sm font-bold text-forest hover:bg-emerald-50 transition-colors shadow-[3px_3px_0_rgba(13,43,32,0.08)] active:shadow-[0_0_0_rgba(13,43,32,0)] ring-[3px] ring-emerald-800/20"
         >
-          <div className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-100 text-emerald-700 shadow-[1px_1px_0_rgba(0,0,0,0.06)]">
-            <selectedPersona.icon size={20} />
+          <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-100 text-emerald-800 shadow-[2px_2px_0_rgba(13,43,32,0.08)]">
+            <selectedPersona.icon size={22} />
           </div>
           <span className="text-forest tracking-tight">{selectedPersona.label}</span>
           <ToggleChevron isOpen={isOpen} />
