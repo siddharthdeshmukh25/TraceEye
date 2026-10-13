@@ -103,7 +103,8 @@ export default function PersonaToggle({ currentPersona, onPersonaChange }: Perso
   }, []);
 
   return (
-    <div className="relative">        <MotionButton
+    <div className="relative">
+        <MotionButton
           onClick={() => setIsOpen(!isOpen)}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}

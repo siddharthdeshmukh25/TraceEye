@@ -58,8 +58,8 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
       setAuth(token, userData);
       
       router.replace("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Google sign-in failed. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google sign-in failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -103,8 +103,8 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
       setAuth(token, user);
       
       router.replace("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Authentication failed. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Authentication failed. Please try again.");
     } finally {
       setLoading(false);
     }
